@@ -1,0 +1,25 @@
+---
+import '../styles/globals.css';
+import { Toaster } from '../components/ui/toast';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Better Auth Dashboard' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <main class="flex min-h-screen flex-col items-center justify-center p-4">
+      <slot />
+    </main>
+    <Toaster client:load />
+  </body>
+</html>

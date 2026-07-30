@@ -1,0 +1,33 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { auth } from '../lib/auth';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+if (session.user.role !== 'admin') {
+  return Astro.redirect('/');
+}
+---
+
+<DashboardLayout title="Admin" requireAdmin>
+  <Card>
+    <CardHeader>
+      <CardTitle>Admin Dashboard</CardTitle>
+      <CardDescription>
+        This page is only accessible to users with the admin role.
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <p class="text-muted-foreground">
+        Welcome to the admin area. You can manage users and settings here.
+      </p>
+    </CardContent>
+  </Card>
+</DashboardLayout>

@@ -1,0 +1,54 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { auth } from '../lib/auth';
+import { AccountForm } from '../components/account-form';
+import 'dotenv/config';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+async function gravatarUrl(email: string, size = 80) {
+  const hash = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(email.trim().toLowerCase()),
+  );
+  const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `https://www.gravatar.com/avatar/${hex}?s=${size}&d=mp`;
+}
+
+const accounts = await auth.api.listUserAccounts({
+  headers: Astro.request.headers,
+});
+
+const image = session.user.image || await gravatarUrl(session.user.email);
+
+const user = {
+  name: session.user.name || 'User',
+  email: session.user.email || '',
+  image,
+  emailVerified: session.user.emailVerified,
+  username: (session.user as any).username as string | undefined,
+  phoneNumber: (session.user as any).phoneNumber as string | undefined,
+  phoneNumberVerified: (session.user as any).phoneNumberVerified as boolean | undefined,
+  twoFactorEnabled: (session.user as any).twoFactorEnabled as boolean | undefined,
+};
+
+const socialProviders = {
+  google: { enabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) },
+  github: { enabled: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) },
+};
+---
+
+<DashboardLayout title="Account">
+  <AccountForm
+    user={user}
+    accounts={accounts}
+    socialProviders={socialProviders}
+    client:load
+  />
+</DashboardLayout>

@@ -1,0 +1,14 @@
+---
+import BlankLayout from '../layouts/BlankLayout.astro';
+import { SignUpForm } from '../components/auth/sign-up-form';
+import 'dotenv/config';
+
+const socialProviders = {
+  google: !!(import.meta.env.GOOGLE_CLIENT_ID && import.meta.env.GOOGLE_CLIENT_SECRET),
+  github: !!(import.meta.env.GITHUB_CLIENT_ID && import.meta.env.GITHUB_CLIENT_SECRET),
+};
+---
+
+<BlankLayout title="Sign Up">
+  <SignUpForm socialProviders={socialProviders} client:load />
+</BlankLayout>

@@ -1,0 +1,55 @@
+---
+import '../styles/globals.css';
+import { auth } from '../lib/auth';
+import { DashboardShell } from '../components/dashboard-shell';
+import { Toaster } from '../components/ui/toast';
+
+interface Props {
+  title?: string;
+  requireAdmin?: boolean;
+}
+
+const { title = 'Dashboard', requireAdmin = false } = Astro.props;
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+if (requireAdmin && session.user.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+async function gravatarUrl(email: string, size = 80) {
+  const hash = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(email.trim().toLowerCase()),
+  );
+  const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `https://www.gravatar.com/avatar/${hex}?s=${size}&d=mp`;
+}
+
+const user = {
+  name: session.user.name || 'User',
+  email: session.user.email || '',
+  image: session.user.image || await gravatarUrl(session.user.email),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <DashboardShell user={user} title={title} client:load>
+      <slot />
+    </DashboardShell>
+    <Toaster client:load />
+  </body>
+</html>
