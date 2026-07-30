@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin, twoFactor } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin } from 'better-auth/plugins';
+import { twoFactorStrict } from './plugins/two-factor-strict';
 import { passkey } from '@better-auth/passkey';
 import { db } from '../db';
 import * as authSchema from '../db/auth-schema';
@@ -120,7 +121,8 @@ export const auth = betterAuth({
         verifyCurrentEmail: true,
       },
     }),
-    twoFactor({
+    twoFactorStrict({
+      allowPasswordless: true,
       otpOptions: {
         async sendOTP({ user, otp }) {
           await email.send({

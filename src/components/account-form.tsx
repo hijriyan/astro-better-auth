@@ -362,14 +362,14 @@ export function AccountForm({ user, accounts, socialProviders }: AccountFormProp
 
   // Two-factor handlers
   const handleEnable2FA = async () => {
-    if (!disablePassword) {
+    if (hasPassword && !disablePassword) {
       toast.add({ title: "Please enter your password", type: "error" });
       return;
     }
     setIsEnabling2FA(true);
     try {
       const { data, error } = await (authClient as any).twoFactor.enable({
-        password: disablePassword,
+        ...(hasPassword ? { password: disablePassword } : {}),
       });
       if (error) throw new Error(error.message);
       setTotpUri(data.totpURI);
@@ -407,14 +407,14 @@ export function AccountForm({ user, accounts, socialProviders }: AccountFormProp
   };
 
   const handleDisable2FA = async () => {
-    if (!disablePassword) {
+    if (hasPassword && !disablePassword) {
       toast.add({ title: "Please enter your password", type: "error" });
       return;
     }
     setIsDisabling2FA(true);
     try {
       const { error } = await (authClient as any).twoFactor.disable({
-        password: disablePassword,
+        ...(hasPassword ? { password: disablePassword } : {}),
       });
       if (error) throw new Error(error.message);
       toast.add({ title: "Two-factor authentication disabled", type: "success" });

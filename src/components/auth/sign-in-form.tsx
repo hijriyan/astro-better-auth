@@ -43,6 +43,14 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorMethods, setTwoFactorMethods] = useState<string[]>([]);
 
+  const maybeHandleTwoFactorRedirect = (data: unknown) => {
+    if (!(data as any)?.twoFactorRedirect) return false;
+    const methods: string[] = (data as any).twoFactorMethods ?? [];
+    setTwoFactorMethods(methods);
+    setView(methods.includes('totp') ? '2fa-totp' : '2fa-otp');
+    return true;
+  };
+
   const handlePasswordSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -60,12 +68,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
       if (result.error) {
         setError(result.error.message || 'Sign in failed');
-      } else if ((result.data as any)?.twoFactorRedirect) {
-        const methods: string[] = (result.data as any).twoFactorMethods ?? [];
-        setTwoFactorMethods(methods);
-        // prefer TOTP if available, fall back to OTP
-        setView(methods.includes('totp') ? '2fa-totp' : '2fa-otp');
-      } else {
+      } else if (!maybeHandleTwoFactorRedirect(result.data)) {
         window.location.href = '/';
       }
     } catch {
@@ -102,7 +105,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
     setError('');
 
     try {
-      const result = await authClient.emailOTP.sendVerificationOtp({
+      const result = await (authClient as any).emailOtp.sendVerificationOtp({
         email: identifier,
         type: 'sign-in',
       });
@@ -125,14 +128,14 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
     setError('');
 
     try {
-      const result = await authClient.signIn.emailOTP({
+      const result = await (authClient as any).signIn.emailOtp({
         email: identifier,
         otp,
       });
 
       if (result.error) {
         setError(result.error.message || 'OTP verification failed');
-      } else {
+      } else if (!maybeHandleTwoFactorRedirect(result.data)) {
         window.location.href = '/';
       }
     } catch {
@@ -197,7 +200,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
     try {
       const result = await (authClient as any).signIn.passkey();
       if (result?.error) setError(result.error.message || 'Passkey sign in failed');
-      else window.location.href = '/';
+      else if (!maybeHandleTwoFactorRedirect(result?.data)) window.location.href = '/';
     } catch {
       setError('An error occurred');
     } finally {

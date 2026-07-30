@@ -9,7 +9,7 @@ export const authClient = createAuthClient({
     phoneNumberClient(),
     magicLinkClient(),
     emailOTPClient(),
-    twoFactorClient(),
+    twoFactorClient({ twoFactorPage: '/two-factor' }),
     passkeyClient(),
     adminClient(),
   ],

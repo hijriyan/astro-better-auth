@@ -1,0 +1,8 @@
+---
+import BlankLayout from '../layouts/BlankLayout.astro';
+import { TwoFactorForm } from '../components/auth/two-factor-form';
+---
+
+<BlankLayout title="Two-factor authentication">
+  <TwoFactorForm client:load />
+</BlankLayout>
