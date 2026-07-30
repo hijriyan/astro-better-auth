@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
             If an account exists with <span className="font-medium text-foreground">{email}</span>,
-            you'll receive a password reset link. Check the server console (debug mode).
+            you'll receive a password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>

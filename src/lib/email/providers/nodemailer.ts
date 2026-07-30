@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
-import type { EmailProvider, SendEmailOptions } from './types';
+import type { EmailProvider, SendEmailOptions } from '../types';
 
 export class NodemailerProvider implements EmailProvider {
   private transporter = nodemailer.createTransport({
