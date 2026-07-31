@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { authClient } from '@/lib/auth-client';
-import { GithubIcon } from 'lucide-react';
+import { SiGithub } from '@icons-pack/react-simple-icons';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -188,7 +188,7 @@ export function SignUpForm({ socialProviders = { google: false, github: false } 
                 )}
                 {socialProviders.github && (
                   <Button variant="outline" type="button" onClick={() => handleOAuth('github')} disabled={loading}>
-                    <GithubIcon className="size-4" />
+                    <SiGithub className="size-4" />
                     GitHub
                   </Button>
                 )}

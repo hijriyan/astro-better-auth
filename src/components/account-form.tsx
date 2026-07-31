@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { User, Lock, GithubIcon, Key, Shield, Fingerprint, Smartphone, QrCode, CloudIcon, MonitorIcon } from "lucide-react";
+import { User, Lock, Key, Shield, Fingerprint, Smartphone, QrCode, CloudIcon, MonitorIcon } from "lucide-react";
+import { SiGithub } from "@icons-pack/react-simple-icons";
 import { authClient } from "@/lib/auth-client";
 import { getAuthenticatorName } from "@better-auth/passkey";
 import { useState, useEffect } from "react";
@@ -787,7 +788,7 @@ export function AccountForm({ user, accounts, socialProviders }: AccountFormProp
                   <div className="flex flex-col items-start justify-between gap-4 py-3 sm:flex-row sm:items-center border-b last:border-0">
                     <div className="flex items-center gap-3">
                       <div className="bg-muted flex size-10 items-center justify-center rounded-full">
-                        <GithubIcon className="text-muted-foreground size-5" />
+                        <SiGithub className="text-muted-foreground size-5" />
                       </div>
                       <div>
                         <p className="font-medium">GitHub</p>
