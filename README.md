@@ -1,6 +1,6 @@
 # Astro Better Auth Starter Kit
 
-A comprehensive, production-ready full-stack authentication starter kit built with **Astro 5**, **React 19**, **Better Auth**, **Drizzle ORM**, **PostgreSQL**, and **Tailwind CSS v4**.
+A comprehensive, production-ready full-stack authentication starter kit built with **Astro 7** (v7.1.5), **React 19**, **Better Auth**, **Drizzle ORM**, **PostgreSQL**, and **Tailwind CSS v4**.
 
 This repository features enterprise-grade authentication workflows including Email & Password with verification, Passwordless Magic Links, 6-digit Email/Phone OTP, WebAuthn Passkeys, Strict Multi-Factor Authentication (2FA), Social OAuth (Google & GitHub), Role-Based Access Control (RBAC), custom React Email templates, and a full-featured Shadcn UI dashboard.
 
@@ -34,21 +34,6 @@ This repository features enterprise-grade authentication workflows including Ema
 - **PostgreSQL**: Powered by `postgres` / `pg` driver with Docker Compose setup included.
 - **Drizzle ORM**: Type-safe schema definition, automated migrations, and interactive database browser via Drizzle Studio.
 - **Automated Schema Sync**: One-command Better Auth schema generation (`npm run db:generate`).
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology | Description |
-| :--- | :--- | :--- |
-| **Framework** | [Astro v5](https://astro.build/) | SSR Web Framework with Server Output |
-| **UI Library** | [React 19](https://react.dev/) | Client-side interactive components & forms |
-| **Auth Engine** | [Better Auth](https://www.better-auth.com/) | Modern typescript-first authentication library |
-| **Database ORM** | [Drizzle ORM](https://orm.drizzle.team/) | TypeScript ORM for SQL databases |
-| **Database** | [PostgreSQL 16](https://www.postgresql.org/) | Relational Database System |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) & [Shadcn UI](https://ui.shadcn.com/) | Modern utility-first styling & component primitives |
-| **Email Engine** | [React Email](https://react.email/) & [Nodemailer](https://nodemailer.com/) | Component-driven transactional email templates |
-| **Data Viz** | [Recharts](https://recharts.org/) & [TanStack Table](https://tanstack.com/table) | Charts, analytics, and data grid components |
 
 ---
 
