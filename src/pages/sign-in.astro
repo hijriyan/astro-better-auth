@@ -1,12 +1,9 @@
 ---
 import BlankLayout from '../layouts/BlankLayout.astro';
 import { SignInForm } from '../components/auth/sign-in-form';
-import 'dotenv/config';
+import { getActiveOAuthProviders } from '@/lib/server/oauth';
 
-const socialProviders = {
-  google: !!(import.meta.env.GOOGLE_CLIENT_ID && import.meta.env.GOOGLE_CLIENT_SECRET),
-  github: !!(import.meta.env.GITHUB_CLIENT_ID && import.meta.env.GITHUB_CLIENT_SECRET),
-};
+const socialProviders = getActiveOAuthProviders();
 ---
 
 <BlankLayout title="Sign In">

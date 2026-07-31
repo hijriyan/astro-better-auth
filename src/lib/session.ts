@@ -18,7 +18,11 @@ export async function requireAuth(context: APIContext) {
 export async function requireAdmin(context: APIContext) {
   const session = await requireAuth(context);
   
-  if (typeof session === 'object' && session.user.role !== 'admin') {
+  if (session instanceof Response) {
+    return session;
+  }
+  
+  if (session.user.role !== 'admin') {
     return context.redirect('/');
   }
   

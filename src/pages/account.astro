@@ -2,6 +2,7 @@
 import DashboardLayout from '../layouts/DashboardLayout.astro';
 import { auth } from '../lib/auth';
 import { AccountForm } from '../components/account-form';
+import { getActiveOAuthProviders } from '../lib/server/oauth';
 import 'dotenv/config';
 
 const session = await auth.api.getSession({
@@ -38,10 +39,7 @@ const user = {
   twoFactorEnabled: (session.user as any).twoFactorEnabled as boolean | undefined,
 };
 
-const socialProviders = {
-  google: { enabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) },
-  github: { enabled: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) },
-};
+const socialProviders = getActiveOAuthProviders();
 ---
 
 <DashboardLayout title="Account">
