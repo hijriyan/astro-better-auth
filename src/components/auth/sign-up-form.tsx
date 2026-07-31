@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { authClient } from '@/lib/auth-client';
 import { SiGithub } from '@icons-pack/react-simple-icons';
+import { CircleAlert } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -19,57 +24,72 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
+const formSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.email('Invalid email address'),
+  username: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Confirm password is required'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
 export function SignUpForm({ socialProviders = { google: false, github: false } }: {
   socialProviders?: { google: boolean; github: boolean }
 }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      username: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    },
+    mode: 'onChange',
+  });
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       await authClient.signIn.social({ provider, callbackURL: '/' });
     } catch {
-      setError('OAuth failed');
+      setError({ message: `Failed to continue with ${provider}` });
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
+    setError(null);
 
     try {
       const result = await authClient.signUp.email({
-        email,
-        password,
-        name,
-        username: username || undefined,
-        phoneNumber: phoneNumber || undefined,
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        username: values.username || undefined,
+        phoneNumber: values.phoneNumber || undefined,
       });
 
       if (result.error) {
-        setError(result.error.message || 'Sign up failed');
+        setError({
+          message: result.error.message || 'Registration failed. Please check your details.',
+          code: (result.error as any).code,
+        });
       } else {
         setSuccess(true);
       }
     } catch (err) {
-      setError('An error occurred');
+      setError({ message: 'An unexpected error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -81,7 +101,7 @@ export function SignUpForm({ socialProviders = { google: false, github: false } 
         <CardHeader>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
-            We've sent a verification link to {email}. Check the server console for the link (debug mode).
+            We've sent a verification link to {form.getValues('email')}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,98 +124,132 @@ export function SignUpForm({ socialProviders = { google: false, github: false } 
         <CardDescription>Fill in your details to get started</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <CircleAlert className="h-4 w-4" />
+            <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email *</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              type="text"
-              placeholder="johndoe"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="johndoe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <PhoneInput
-              id="phone"
-              value={phoneNumber}
-              onChange={(v) => setPhoneNumber(v ?? '')}
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <PhoneInput
+                      id="phone"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password *</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm Password *</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password *</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
-          </Button>
-          {(socialProviders.google || socialProviders.github) && (
-            <>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
+
+
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create Account'}
+            </Button>
+
+            {(socialProviders.google || socialProviders.github) && (
+              <>
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <div className={`grid gap-4 ${socialProviders.google && socialProviders.github ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  {socialProviders.google && (
+                    <Button variant="outline" type="button" onClick={() => handleOAuth('google')} disabled={loading}>
+                      <GoogleIcon className="size-4" />
+                      Google
+                    </Button>
+                  )}
+                  {socialProviders.github && (
+                    <Button variant="outline" type="button" onClick={() => handleOAuth('github')} disabled={loading}>
+                      <SiGithub className="size-4" />
+                      GitHub
+                    </Button>
+                  )}
                 </div>
-              </div>
-              <div className={`grid gap-4 ${socialProviders.google && socialProviders.github ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {socialProviders.google && (
-                  <Button variant="outline" type="button" onClick={() => handleOAuth('google')} disabled={loading}>
-                    <GoogleIcon className="size-4" />
-                    Google
-                  </Button>
-                )}
-                {socialProviders.github && (
-                  <Button variant="outline" type="button" onClick={() => handleOAuth('github')} disabled={loading}>
-                    <SiGithub className="size-4" />
-                    GitHub
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </form>
+              </>
+            )}
+          </form>
+        </Form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">

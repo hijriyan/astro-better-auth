@@ -1,32 +1,56 @@
 import { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { authClient } from '@/lib/auth-client';
+import { CircleAlert } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const formSchema = z.object({
+  email: z.email('Invalid email address'),
+});
 
 export function ForgotPasswordForm() {
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+    },
+    mode: 'onChange',
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
-    setError('');
+    setError(null);
+    setSuccess(false);
 
-    const result = await authClient.requestPasswordReset({
-      email,
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    try {
+      const result = await authClient.requestPasswordReset({
+        email: values.email,
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-    if (result.error) {
-      setError(result.error.message || 'Failed to send reset link');
-    } else {
-      setSuccess(true);
+      if (result.error) {
+        setError({
+          message: result.error.message || 'Failed to send reset email. Please try again.',
+          code: (result.error as any).code,
+        });
+      } else {
+        setSuccess(true);
+      }
+    } catch (err) {
+      setError({ message: 'An unexpected error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (success) {
@@ -35,7 +59,7 @@ export function ForgotPasswordForm() {
         <CardHeader>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
-            If an account exists with <span className="font-medium text-foreground">{email}</span>,
+            If an account exists with <span className="font-medium text-foreground">{form.getValues('email')}</span>,
             you'll receive a password reset link.
           </CardDescription>
         </CardHeader>
@@ -43,7 +67,7 @@ export function ForgotPasswordForm() {
           <button
             type="button"
             className="text-sm text-primary underline underline-offset-4"
-            onClick={() => { setSuccess(false); setEmail(''); }}
+            onClick={() => { setSuccess(false); form.reset(); }}
           >
             Try a different email
           </button>
@@ -59,23 +83,34 @@ export function ForgotPasswordForm() {
         <CardDescription>Enter your email to receive a password reset link</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <CircleAlert className="h-4 w-4" />
+            <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </Button>
-        </form>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">

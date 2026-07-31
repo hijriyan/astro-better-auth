@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,12 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { KeyRound, Link, Mail } from 'lucide-react';
+import { CircleAlert, KeyRound, Link, Mail } from 'lucide-react';
 import { SiGithub } from '@icons-pack/react-simple-icons';
 import { authClient } from '@/lib/auth-client';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -36,13 +41,41 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 }) {
   const [view, setView] = useState<View>('form');
   const [loginMethod, setLoginMethod] = useState<'email' | 'username' | 'phone'>('email');
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorMethods, setTwoFactorMethods] = useState<string[]>([]);
+
+  const formSchema = z.object({
+    identifier: z.string().min(1, 'Required'),
+    password: z.string().min(1, 'Required'),
+  }).superRefine((data, ctx) => {
+    if (loginMethod === 'email' && !z.email().safeParse(data.identifier).success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['identifier'],
+        message: 'Invalid email address',
+      });
+    }
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      identifier: '',
+      password: '',
+    },
+    mode: 'onChange',
+  });
+
+  // Clear identifier error when method changes
+  useEffect(() => {
+    form.clearErrors('identifier');
+  }, [loginMethod, form]);
+
+  const identifier = form.watch('identifier');
 
   const maybeHandleTwoFactorRedirect = (data: unknown) => {
     if (!(data as any)?.twoFactorRedirect) return false;
@@ -52,28 +85,30 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
     return true;
   };
 
-  const handlePasswordSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       let result;
       if (loginMethod === 'email') {
-        result = await authClient.signIn.email({ email: identifier, password });
+        result = await authClient.signIn.email({ email: values.identifier, password: values.password });
       } else if (loginMethod === 'username') {
-        result = await authClient.signIn.username({ username: identifier, password });
+        result = await authClient.signIn.username({ username: values.identifier, password: values.password });
       } else {
-        result = await authClient.signIn.phoneNumber({ phoneNumber: identifier, password });
+        result = await authClient.signIn.phoneNumber({ phoneNumber: values.identifier, password: values.password });
       }
 
       if (result.error) {
-        setError(result.error.message || 'Sign in failed');
+        setError({
+          message: result.error.message || 'Invalid identifier or password. Please try again.',
+          code: (result.error as any).code,
+        });
       } else if (!maybeHandleTwoFactorRedirect(result.data)) {
         window.location.href = '/';
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -81,7 +116,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
   const handleMagicLink = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const result = await authClient.signIn.magicLink({
@@ -90,12 +125,15 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
       });
 
       if (result.error) {
-        setError(result.error.message || 'Magic link failed');
+        setError({
+          message: result.error.message || 'Failed to send magic link. Please check the email and try again.',
+          code: (result.error as any).code,
+        });
       } else {
         setView('magic-link-sent');
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -103,7 +141,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
   const handleSendOtp = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const result = await (authClient as any).emailOtp.sendVerificationOtp({
@@ -112,12 +150,15 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
       });
 
       if (result.error) {
-        setError(result.error.message || 'Failed to send OTP');
+        setError({
+          message: result.error.message || 'Failed to send OTP. Please check the email and try again.',
+          code: (result.error as any).code,
+        });
       } else {
         setView('otp-input');
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -126,7 +167,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const result = await (authClient as any).signIn.emailOtp({
@@ -135,12 +176,15 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
       });
 
       if (result.error) {
-        setError(result.error.message || 'OTP verification failed');
+        setError({
+          message: result.error.message || 'Invalid or expired code. Please try again.',
+          code: (result.error as any).code,
+        });
       } else if (!maybeHandleTwoFactorRedirect(result.data)) {
         window.location.href = '/';
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -149,16 +193,19 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
   const handleVerifyTwoFactorTotp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       const result = await (authClient as any).twoFactor.verifyTotp({ code: twoFactorCode });
       if (result.error) {
-        setError(result.error.message || '2FA verification failed');
+        setError({
+          message: result.error.message || 'Invalid authenticator code. Please try again.',
+          code: (result.error as any).code,
+        });
       } else {
         window.location.href = '/';
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -166,12 +213,12 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
   const handleSendTwoFactorOtp = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       const result = await (authClient as any).twoFactor.sendOtp();
-      if (result.error) setError(result.error.message || 'Failed to send code');
+      if (result.error) setError({ message: 'Failed to send code. Please try again.' });
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -180,16 +227,19 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
   const handleVerifyTwoFactorOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       const result = await (authClient as any).twoFactor.verifyOtp({ code: twoFactorCode });
       if (result.error) {
-        setError(result.error.message || '2FA verification failed');
+        setError({
+          message: result.error.message || 'Invalid code. Please try again.',
+          code: (result.error as any).code,
+        });
       } else {
         window.location.href = '/';
       }
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -197,13 +247,13 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
   const handlePasskeySignIn = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       const result = await (authClient as any).signIn.passkey();
-      if (result?.error) setError(result.error.message || 'Passkey sign in failed');
+      if (result?.error) setError({ message: result?.error?.message || 'Passkey sign in failed. Please try again.' });
       else if (!maybeHandleTwoFactorRedirect(result?.data)) window.location.href = '/';
     } catch {
-      setError('An error occurred');
+      setError({ message: 'An error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -211,10 +261,11 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     setLoading(true);
+    setError(null);
     try {
       await authClient.signIn.social({ provider, callbackURL: '/' });
     } catch {
-      setError('OAuth failed');
+      setError({ message: `Failed to sign in with ${provider}.` });
       setLoading(false);
     }
   };
@@ -237,7 +288,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
             <button
               type="button"
               className="text-primary underline underline-offset-4"
-              onClick={() => { setView('form'); setError(''); }}
+              onClick={() => { setView('form'); setError(null); }}
             >
               try again
             </button>
@@ -260,6 +311,13 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <CircleAlert className="h-4 w-4" />
+              <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="otp">Code</Label>
@@ -279,7 +337,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Verifying...' : 'Verify Code'}
             </Button>
@@ -287,7 +345,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
               type="button"
               variant="ghost"
               className="w-full"
-              onClick={() => { setView('form'); setOtp(''); setError(''); }}
+              onClick={() => { setView('form'); setOtp(''); setError(null); }}
             >
               Back
             </Button>
@@ -308,6 +366,13 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <CircleAlert className="h-4 w-4" />
+              <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleVerifyTwoFactorTotp} className="space-y-4">
             <div className="space-y-2">
               <Label>Authenticator code</Label>
@@ -322,7 +387,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            
             <Button type="submit" className="w-full" disabled={loading || twoFactorCode.length < 6}>
               {loading ? 'Verifying...' : 'Verify'}
             </Button>
@@ -331,7 +396,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
                 type="button"
                 variant="ghost"
                 className="w-full"
-                onClick={() => { setView('2fa-otp'); setTwoFactorCode(''); setError(''); handleSendTwoFactorOtp(); }}
+                onClick={() => { setView('2fa-otp'); setTwoFactorCode(''); setError(null); handleSendTwoFactorOtp(); }}
               >
                 Use email code instead
               </Button>
@@ -340,7 +405,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
               type="button"
               variant="ghost"
               className="w-full"
-              onClick={() => { setView('form'); setTwoFactorCode(''); setError(''); }}
+              onClick={() => { setView('form'); setTwoFactorCode(''); setError(null); }}
             >
               Back to sign in
             </Button>
@@ -361,6 +426,13 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <CircleAlert className="h-4 w-4" />
+              <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleVerifyTwoFactorOtp} className="space-y-4">
             <div className="space-y-2">
               <Label>Email code</Label>
@@ -375,7 +447,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            
             <Button type="submit" className="w-full" disabled={loading || twoFactorCode.length < 6}>
               {loading ? 'Verifying...' : 'Verify'}
             </Button>
@@ -383,7 +455,7 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
               type="button"
               variant="ghost"
               className="w-full"
-              onClick={() => { setView('form'); setTwoFactorCode(''); setError(''); }}
+              onClick={() => { setView('form'); setTwoFactorCode(''); setError(null); }}
             >
               Back to sign in
             </Button>
@@ -401,67 +473,91 @@ export function SignInForm({ socialProviders = { google: false, github: false } 
         <CardDescription>Choose your preferred sign in method</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handlePasswordSignIn} className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="identifier">
-                {loginMethod === 'email' ? 'Email' : loginMethod === 'username' ? 'Username' : 'Phone Number'}
-              </Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={<Button variant="outline" size="sm" />}
-                >
-                  Switch
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[120px]">
-                  <DropdownMenuRadioGroup value={loginMethod} onValueChange={(v) => setLoginMethod(v as typeof loginMethod)}>
-                    <DropdownMenuLabel>Sign in method</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="email">Email</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="username">Username</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="phone">Phone</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            {loginMethod === 'phone' ? (
-              <PhoneInput
-                id="identifier"
-                value={identifier}
-                onChange={(v) => setIdentifier(v ?? '')}
-                required
-              />
-            ) : (
-              <Input
-                id="identifier"
-                type={loginMethod === 'email' ? 'email' : 'text'}
-                placeholder={loginMethod === 'email' ? 'you@example.com' : 'username'}
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                required
-              />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <a href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <CircleAlert className="h-4 w-4" />
+            <AlertTitle>Error {error.code ? `(${error.code})` : ''}</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="identifier"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>
+                      {loginMethod === 'email' ? 'Email' : loginMethod === 'username' ? 'Username' : 'Phone Number'}
+                    </FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={<Button variant="outline" size="sm" type="button" />}
+                      >
+                        Switch
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[120px]">
+                        <DropdownMenuRadioGroup value={loginMethod} onValueChange={(v) => setLoginMethod(v as typeof loginMethod)}>
+                          <DropdownMenuLabel>Sign in method</DropdownMenuLabel>
+                          <DropdownMenuRadioItem value="email">Email</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="username">Username</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="phone">Phone</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <FormControl>
+                    {loginMethod === 'phone' ? (
+                      <PhoneInput
+                        id="identifier"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    ) : (
+                      <Input
+                        id="identifier"
+                        type={loginMethod === 'email' ? 'email' : 'text'}
+                        placeholder={loginMethod === 'email' ? 'you@example.com' : 'username'}
+                        {...field}
+                      />
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
-        </form>
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Password</FormLabel>
+                    <a href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <FormControl>
+                    <Input
+                      id="password"
+                      type="password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
+            
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+        </Form>
 
         {loginMethod === 'email' && (
           <>
