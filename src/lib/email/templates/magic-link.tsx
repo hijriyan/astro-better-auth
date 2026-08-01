@@ -3,9 +3,12 @@ import { Body, Button, Container, Head, Heading, Html, Preview, Section, Text } 
 interface MagicLinkEmailProps {
   url: string;
   email: string;
+  description?: string;
 }
 
-export function MagicLinkEmail({ url, email }: MagicLinkEmailProps) {
+export function MagicLinkEmail({ url, email, description }: MagicLinkEmailProps) {
+  const body = description ?? `Click the button below to sign in as <strong>${email}</strong>. This link expires in 15 minutes.`;
+
   return (
     <Html>
       <Head />
@@ -13,9 +16,11 @@ export function MagicLinkEmail({ url, email }: MagicLinkEmailProps) {
       <Body style={{ backgroundColor: '#f9fafb', fontFamily: 'sans-serif' }}>
         <Container style={{ maxWidth: '480px', margin: '40px auto', backgroundColor: '#fff', borderRadius: '8px', padding: '32px' }}>
           <Heading style={{ fontSize: '20px', marginBottom: '8px' }}>Sign in to your account</Heading>
-          <Text style={{ color: '#6b7280', marginBottom: '24px' }}>
-            Click the button below to sign in as <strong>{email}</strong>. This link expires in 15 minutes.
-          </Text>
+          <Text
+            style={{ color: '#6b7280', marginBottom: '24px' }}
+            dangerouslySetInnerHTML={{ __html: body }}
+          />
+
           <Section style={{ textAlign: 'center', marginBottom: '24px' }}>
             <Button href={url} style={{ backgroundColor: '#111827', color: '#fff', padding: '12px 24px', borderRadius: '6px', textDecoration: 'none', fontWeight: '600' }}>
               Sign In

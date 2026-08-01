@@ -11,6 +11,10 @@ import { VerifyEmail } from './email/templates/verify-email';
 import { ResetPasswordEmail } from './email/templates/reset-password';
 import { OtpEmail } from './email/templates/otp';
 import 'dotenv/config';
+import { parseTTL, formatTTL } from './utils';
+
+const OTP_TTL = parseTTL(process.env.ONE_TIME_CODE_TTL, 60); // 1 minute default
+const LINK_TTL = parseTTL(process.env.ONE_TIME_LINK_TTL, 600); // 10 minutes default
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -24,17 +28,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    resetPasswordTokenExpiresIn: LINK_TTL,
     sendResetPassword: async ({ user, url }) => {
       await email.send({
         to: user.email,
         subject: 'Reset your password',
-        react: ResetPasswordEmail({ url, email: user.email }),
+        react: ResetPasswordEmail({ url, email: user.email, description: `We received a request to reset the password for <strong>${user.email}</strong>. Click the button below to choose a new password. This link expires in ${formatTTL(LINK_TTL)}.` }),
       });
     },
   },
 
   emailVerification: {
     sendOnSignUp: true,
+    expiresIn: LINK_TTL,
     sendVerificationEmail: async ({ user, url }) => {
       const verifyUrl = new URL(url);
       verifyUrl.searchParams.set('callbackURL', `${process.env.BETTER_AUTH_URL}/sign-in`);
@@ -45,7 +51,7 @@ export const auth = betterAuth({
           url: verifyUrl.toString(),
           email: user.email,
           title: 'Verify your email address',
-          description: `Thanks for signing up! Click the button below to verify <strong>${user.email}</strong> and activate your account.`,
+          description: `Thanks for signing up! Click the button below to verify <strong>${user.email}</strong> and activate your account. This link expires in ${formatTTL(LINK_TTL)}.`,
           buttonLabel: 'Verify Email',
         }),
       });
@@ -65,17 +71,18 @@ export const auth = betterAuth({
             otp: code,
             email: phoneNumber,
             title: 'Your phone verification code',
-            description: `Use the code below to verify your phone number. It expires in 5 minutes.`,
+            description: `Use the code below to verify your phone number. It expires in ${formatTTL(OTP_TTL)}.`,
           }),
         });
       },
     }),
     magicLink({
+      expiresIn: LINK_TTL,
       sendMagicLink: async ({ email: to, url }) => {
         await email.send({
           to,
           subject: 'Your magic sign-in link',
-          react: MagicLinkEmail({ url, email: to }),
+          react: MagicLinkEmail({ url, email: to, description: `Click the button below to sign in as <strong>${to}</strong>. This link expires in ${formatTTL(LINK_TTL)}.` }),
         });
       },
     }),
@@ -85,28 +92,28 @@ export const auth = betterAuth({
           'sign-in': {
             subject: 'Your sign-in code',
             title: 'Your sign-in code',
-            description: `Use the code below to sign in as <strong>${to}</strong>. It expires in 5 minutes.`,
+            description: `Use the code below to sign in as <strong>${to}</strong>. It expires in ${formatTTL(OTP_TTL)}.`,
           },
           'email-verification': {
             subject: 'Verify your email address',
             title: 'Verify your email address',
-            description: `Use the code below to verify <strong>${to}</strong>. It expires in 5 minutes.`,
+            description: `Use the code below to verify <strong>${to}</strong>. It expires in ${formatTTL(OTP_TTL)}.`,
           },
           'change-email': {
             subject: 'Verify your new email address',
             title: 'Verify your new email address',
-            description: `Use the code below to confirm changing your email to <strong>${to}</strong>. It expires in 5 minutes.`,
+            description: `Use the code below to confirm changing your email to <strong>${to}</strong>. It expires in ${formatTTL(OTP_TTL)}.`,
           },
           'forget-password': {
             subject: 'Reset your password',
             title: 'Reset your password',
-            description: `Use the code below to reset the password for <strong>${to}</strong>. It expires in 5 minutes.`,
+            description: `Use the code below to reset the password for <strong>${to}</strong>. It expires in ${formatTTL(OTP_TTL)}.`,
           },
         };
         const t = templates[type] ?? {
           subject: 'Your verification code',
           title: 'Your verification code',
-          description: `Use the code below for <strong>${to}</strong>. It expires in 5 minutes.`,
+          description: `Use the code below for <strong>${to}</strong>. It expires in ${formatTTL(OTP_TTL)}.`,
         };
         await email.send({
           to,
@@ -115,7 +122,7 @@ export const auth = betterAuth({
         });
       },
       otpLength: 6,
-      expiresIn: 300,
+      expiresIn: OTP_TTL,
       changeEmail: {
         enabled: true,
         verifyCurrentEmail: true,
@@ -132,7 +139,7 @@ export const auth = betterAuth({
               otp,
               email: user.email,
               title: 'Your two-factor authentication code',
-              description: `Use the code below to complete your sign-in. It expires in 5 minutes.`,
+              description: `Use the code below to complete your sign-in. It expires in ${formatTTL(OTP_TTL)}.`,
             }),
           });
         },
