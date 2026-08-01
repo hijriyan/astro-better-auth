@@ -36,6 +36,20 @@ export function SignInForm({ socialProviders = {} }: {
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorMethods, setTwoFactorMethods] = useState<string[]>([]);
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Run on client to avoid hydration mismatch
+    const method = authClient.getLastUsedLoginMethod?.() || null;
+    console.log('last used method', method);
+    setLastUsedMethod(method);
+
+    if (method === 'username') {
+      setLoginMethod('username');
+    } else if (method === 'phone' || method === 'phoneNumber') {
+      setLoginMethod('phone');
+    }
+  }, []);
 
   const formSchema = z.object({
     identifier: z.string().min(1, 'Required'),
@@ -562,12 +576,17 @@ export function SignInForm({ socialProviders = {} }: {
               <Button
                 variant="outline"
                 type="button"
-                className="w-full"
+                className="w-full relative overflow-visible"
                 onClick={handleMagicLink}
                 disabled={loading || !identifier}
               >
                 <Link className="size-4" />
                 {loading ? 'Sending...' : 'Continue with Magic Link'}
+                {lastUsedMethod === 'magic-link' && (
+                  <span className="absolute -top-2.5 -right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    Last used
+                  </span>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -594,12 +613,17 @@ export function SignInForm({ socialProviders = {} }: {
         <Button
           variant="outline"
           type="button"
-          className="w-full"
+          className="w-full relative overflow-visible"
           onClick={handlePasskeySignIn}
           disabled={loading}
         >
           <KeyRound className="size-4" />
           {loading ? 'Waiting...' : 'Continue with Passkey'}
+          {lastUsedMethod === 'passkey' && (
+            <span className="absolute -top-2.5 -right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+              Last used
+            </span>
+          )}
         </Button>
 
         {Object.keys(socialProviders).length > 0 && (
@@ -617,10 +641,16 @@ export function SignInForm({ socialProviders = {} }: {
                 const providerMap = socialProviderMaps[providerId];
                 const Icon = providerMap?.icon || Link;
                 const iconColor = providerMap?.color || undefined;
+                const isLastUsed = lastUsedMethod === providerId;
                 return (
-                  <Button key={providerId} variant="outline" type="button" onClick={() => handleOAuth(providerId)} disabled={loading}>
+                  <Button key={providerId} variant="outline" type="button" onClick={() => handleOAuth(providerId)} disabled={loading} className="relative overflow-visible">
                     {Icon && <Icon className="size-4" style={{ color: iconColor }} />}
                     {provider.label}
+                    {isLastUsed && (
+                      <span className="absolute -top-2.5 -right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        Last used
+                      </span>
+                    )}
                   </Button>
                 );
               })}
