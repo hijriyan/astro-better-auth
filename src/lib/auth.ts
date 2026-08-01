@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod } from 'better-auth/plugins';
 import { twoFactorStrict } from './plugins/two-factor-strict';
 import { passkey } from '@better-auth/passkey';
 import { db } from '../db';
@@ -140,6 +140,10 @@ export const auth = betterAuth({
     }),
     passkey(),
     admin(),
+    haveIBeenPwned(),
+    lastLoginMethod({
+      storeInDatabase: true
+    }),
   ],
 
   socialProviders: {

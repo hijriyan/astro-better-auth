@@ -21,12 +21,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { CircleAlert, KeyRound, Link, Mail } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { socialProviderMaps } from '@/lib/constants';
+import { socialProviderMaps, type SocialProviderType } from '@/lib/constants';
 
 type View = 'form' | 'magic-link-sent' | 'otp-input' | '2fa-totp' | '2fa-otp';
 
 export function SignInForm({ socialProviders = {} }: {
-  socialProviders?: Record<string, { label: string, enabled: boolean }>
+  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>
 }) {
   const [view, setView] = useState<View>('form');
   const [loginMethod, setLoginMethod] = useState<'email' | 'username' | 'phone'>('email');
@@ -43,7 +43,7 @@ export function SignInForm({ socialProviders = {} }: {
   }).superRefine((data, ctx) => {
     if (loginMethod === 'email' && !z.email().safeParse(data.identifier).success) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ['identifier'],
         message: 'Invalid email address',
       });
@@ -153,7 +153,7 @@ export function SignInForm({ socialProviders = {} }: {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -179,7 +179,7 @@ export function SignInForm({ socialProviders = {} }: {
     }
   };
 
-  const handleVerifyTwoFactorTotp = async (e: React.FormEvent) => {
+  const handleVerifyTwoFactorTotp = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -213,7 +213,7 @@ export function SignInForm({ socialProviders = {} }: {
     }
   };
 
-  const handleVerifyTwoFactorOtp = async (e: React.FormEvent) => {
+  const handleVerifyTwoFactorOtp = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);

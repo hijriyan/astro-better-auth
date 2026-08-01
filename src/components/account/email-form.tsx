@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/input-otp";
 
 const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email({ message: "Please enter a valid email address" }),
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;

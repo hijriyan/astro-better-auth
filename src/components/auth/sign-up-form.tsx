@@ -11,7 +11,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { CircleAlert, Link } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { socialProviderMaps } from '@/lib/constants';
+import { socialProviderMaps, type SocialProviderType } from '@/lib/constants';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -26,7 +26,7 @@ const formSchema = z.object({
 });
 
 export function SignUpForm({ socialProviders = {} }: {
-  socialProviders?: Record<string, { label: string, enabled: boolean }>
+  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);

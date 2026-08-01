@@ -8,6 +8,20 @@
       "when": 1785284324889,
       "tag": "0000_stormy_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785490005921,
+      "tag": "0001_tiresome_hawkeye",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785490072520,
+      "tag": "0002_ordinary_demogoblin",
+      "breakpoints": true
     }
   ]
 }
