@@ -1,6 +1,7 @@
 import { createAuthClient } from 'better-auth/react';
-import { usernameClient, phoneNumberClient, magicLinkClient, emailOTPClient, adminClient, twoFactorClient, lastLoginMethodClient } from 'better-auth/client/plugins';
+import { usernameClient, phoneNumberClient, magicLinkClient, emailOTPClient, adminClient, twoFactorClient, lastLoginMethodClient, organizationClient } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
+import { ac } from './permissions';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.BETTER_AUTH_URL || 'http://localhost:4321',
@@ -13,6 +14,15 @@ export const authClient = createAuthClient({
     passkeyClient(),
     adminClient(),
     lastLoginMethodClient(),
+    organizationClient({
+      ac: ac,
+      teams: {
+        enabled: true
+      },
+      dynamicAccessControl: {
+        enabled: true
+      }
+    }),
   ],
 });
 

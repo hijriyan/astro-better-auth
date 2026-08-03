@@ -1,0 +1,105 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { auth } from '../../lib/auth';
+import { OrgDashboard } from '../../components/org/org-dashboard';
+import type { OrgPermissions } from '../../lib/org-permissions';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+let orgName = slug;
+let initialOrg: any = null;
+let initialRoles: any[] | null = null;
+
+try {
+  const org = await auth.api.getFullOrganization({
+    headers: Astro.request.headers,
+    query: { organizationSlug: slug }
+  });
+  if (org) {
+    orgName = org.name;
+    initialOrg = org;
+  }
+} catch (e) {
+  console.error("Failed to fetch organization", e);
+}
+
+// Resolve all permissions server-side so dynamic roles are handled correctly.
+// Each check is independent — use allSettled so one failure doesn't block the rest.
+const permissions: OrgPermissions = {
+  organization: { update: false, delete: false },
+  member:       { create: false, update: false, delete: false },
+  invitation:   { create: false, cancel: false },
+  team:         { create: false, update: false, delete: false },
+  ac:           { read: false, create: false, update: false, delete: false },
+};
+
+if (initialOrg) {
+  const checks: Array<{ path: keyof OrgPermissions; action: string; perm: Record<string, string[]> }> = [
+    { path: "organization", action: "update", perm: { organization: ["update"] } },
+    { path: "organization", action: "delete", perm: { organization: ["delete"] } },
+    { path: "member",       action: "create", perm: { member: ["create"] } },
+    { path: "member",       action: "update", perm: { member: ["update"] } },
+    { path: "member",       action: "delete", perm: { member: ["delete"] } },
+    { path: "invitation",   action: "create", perm: { invitation: ["create"] } },
+    { path: "invitation",   action: "cancel", perm: { invitation: ["cancel"] } },
+    { path: "team",         action: "create", perm: { team: ["create"] } },
+    { path: "team",         action: "update", perm: { team: ["update"] } },
+    { path: "team",         action: "delete", perm: { team: ["delete"] } },
+    { path: "ac",           action: "read",   perm: { ac: ["read"] } },
+    { path: "ac",           action: "create", perm: { ac: ["create"] } },
+    { path: "ac",           action: "update", perm: { ac: ["update"] } },
+    { path: "ac",           action: "delete", perm: { ac: ["delete"] } },
+  ];
+
+  const results = await Promise.allSettled(
+    checks.map(({ perm }) =>
+      auth.api.hasPermission({
+        headers: Astro.request.headers,
+        body: { organizationId: initialOrg.id, permissions: perm },
+      })
+    )
+  );
+
+  results.forEach((result, i) => {
+    const { path, action } = checks[i];
+    (permissions[path] as any)[action] =
+      result.status === "fulfilled" && result.value?.success === true;
+  });
+
+  // ac:read controls whether the Access Control tab is visible at all
+  if (permissions.ac.read) {
+    try {
+      const roles = await auth.api.listOrgRoles({
+        headers: Astro.request.headers,
+        query: { organizationId: initialOrg.id },
+      });
+      if (roles) initialRoles = roles;
+    } catch (e) {
+      // keep initialRoles null
+    }
+  }
+}
+
+const breadcrumbs = [
+  { label: "Organization", href: "/" },
+  { label: orgName, href: `/org/${slug}` }
+];
+---
+
+<DashboardLayout title={`Organization: ${orgName}`} breadcrumbs={breadcrumbs}>
+  <div class="flex flex-col gap-4 py-4 md:gap-8 md:py-8 px-4 lg:px-6 max-w-6xl mx-auto w-full">
+    <OrgDashboard slug={slug} initialOrg={initialOrg} initialRoles={initialRoles} permissions={permissions} client:load />
+  </div>
+</DashboardLayout>

@@ -22,6 +22,7 @@ import { CircleAlert, KeyRound, Link, Mail } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { socialProviderMaps, type SocialProviderType } from '@/lib/constants';
+import { getCallbackUrl } from '@/lib/utils';
 
 type View = 'form' | 'magic-link-sent' | 'otp-input' | '2fa-totp' | '2fa-otp';
 
@@ -41,7 +42,6 @@ export function SignInForm({ socialProviders = {} }: {
   useEffect(() => {
     // Run on client to avoid hydration mismatch
     const method = authClient.getLastUsedLoginMethod?.() || null;
-    console.log('last used method', method);
     setLastUsedMethod(method);
 
     if (method === 'username') {
@@ -108,7 +108,7 @@ export function SignInForm({ socialProviders = {} }: {
           code: (result.error as any).code,
         });
       } else if (!maybeHandleTwoFactorRedirect(result.data)) {
-        window.location.href = '/';
+        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -124,7 +124,7 @@ export function SignInForm({ socialProviders = {} }: {
     try {
       const result = await authClient.signIn.magicLink({
         email: identifier,
-        callbackURL: '/',
+        callbackURL: getCallbackUrl(),
       });
 
       if (result.error) {
@@ -184,7 +184,7 @@ export function SignInForm({ socialProviders = {} }: {
           code: (result.error as any).code,
         });
       } else if (!maybeHandleTwoFactorRedirect(result.data)) {
-        window.location.href = '/';
+        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -205,7 +205,7 @@ export function SignInForm({ socialProviders = {} }: {
           code: (result.error as any).code,
         });
       } else {
-        window.location.href = '/';
+        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -239,7 +239,7 @@ export function SignInForm({ socialProviders = {} }: {
           code: (result.error as any).code,
         });
       } else {
-        window.location.href = '/';
+        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -254,7 +254,7 @@ export function SignInForm({ socialProviders = {} }: {
     try {
       const result = await (authClient as any).signIn.passkey();
       if (result?.error) setError({ message: result?.error?.message || 'Passkey sign in failed. Please try again.' });
-      else if (!maybeHandleTwoFactorRedirect(result?.data)) window.location.href = '/';
+      else if (!maybeHandleTwoFactorRedirect(result?.data)) window.location.href = getCallbackUrl();
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
     } finally {
@@ -266,7 +266,7 @@ export function SignInForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      await authClient.signIn.social({ provider, callbackURL: '/' });
+      await authClient.signIn.social({ provider, callbackURL: getCallbackUrl() });
     } catch {
       setError({ message: `Failed to sign in with ${provider}.` });
       setLoading(false);
@@ -661,7 +661,10 @@ export function SignInForm({ socialProviders = {} }: {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <a href="/sign-up" className="text-primary underline-offset-4 hover:underline">
+          <a 
+            href={`/sign-up${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`} 
+            className="text-primary underline-offset-4 hover:underline"
+          >
             Sign up
           </a>
         </p>

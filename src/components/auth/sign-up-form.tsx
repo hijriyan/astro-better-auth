@@ -12,6 +12,7 @@ import { CircleAlert, Link } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { socialProviderMaps, type SocialProviderType } from '@/lib/constants';
+import { getCallbackUrl } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -49,7 +50,7 @@ export function SignUpForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      await authClient.signIn.social({ provider, callbackURL: '/' });
+      await authClient.signIn.social({ provider, callbackURL: getCallbackUrl() });
     } catch {
       setError({ message: `Failed to continue with ${provider}` });
       setLoading(false);
@@ -96,7 +97,10 @@ export function SignUpForm({ socialProviders = {} }: {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             After verification, you can{' '}
-            <a href="/sign-in" className="text-primary underline-offset-4 hover:underline">
+            <a 
+              href={`/sign-in${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`} 
+              className="text-primary underline-offset-4 hover:underline"
+            >
               sign in
             </a>
             .
@@ -242,7 +246,10 @@ export function SignUpForm({ socialProviders = {} }: {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Already have an account?{' '}
-          <a href="/sign-in" className="text-primary underline-offset-4 hover:underline">
+          <a 
+            href={`/sign-in${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`} 
+            className="text-primary underline-offset-4 hover:underline"
+          >
             Sign in
           </a>
         </p>

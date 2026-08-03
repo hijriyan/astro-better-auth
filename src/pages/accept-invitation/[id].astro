@@ -1,0 +1,27 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { AcceptInvitationClient } from '../../components/org/accept-invitation-client';
+import { auth } from '../../lib/auth';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/');
+}
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  const url = new URL(Astro.request.url);
+  const callbackURL = encodeURIComponent(url.pathname);
+  return Astro.redirect(`/sign-in?callbackURL=${callbackURL}`);
+}
+---
+
+<DashboardLayout title="Accept Invitation">
+  <div class="flex items-center justify-center min-h-[60vh] px-4">
+    <AcceptInvitationClient client:load invitationId={id} />
+  </div>
+</DashboardLayout>

@@ -37,3 +37,24 @@ export function formatTTL(seconds: number): string {
 
   return parts[0] || '0 seconds';
 }
+
+export const getCallbackUrl = () => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const callbackURL = params.get('callbackURL');
+    
+    if (callbackURL) {
+      try {
+        // Gunakan URL parser bawaan browser untuk memvalidasi origin secara absolut
+        const parsedUrl = new URL(callbackURL, window.location.origin);
+        if (parsedUrl.origin === window.location.origin) {
+          // Hanya kembalikan path, query, dan hash
+          return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+        }
+      } catch (e) {
+        // Jika URL tidak valid, fallthrough ke return '/'
+      }
+    }
+  }
+  return '/';
+};

@@ -22,6 +22,20 @@
       "when": 1785490072520,
       "tag": "0002_ordinary_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785571043903,
+      "tag": "0003_lazy_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785576168396,
+      "tag": "0004_fancy_the_anarchist",
+      "breakpoints": true
     }
   ]
 }

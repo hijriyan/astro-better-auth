@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization } from 'better-auth/plugins';
 import { twoFactorStrict } from './plugins/two-factor-strict';
 import { passkey } from '@better-auth/passkey';
 import { db } from '../db';
@@ -10,11 +10,16 @@ import { MagicLinkEmail } from './email/templates/magic-link';
 import { VerifyEmail } from './email/templates/verify-email';
 import { ResetPasswordEmail } from './email/templates/reset-password';
 import { OtpEmail } from './email/templates/otp';
+import { InvitationEmail } from './email/templates/invitation';
 import 'dotenv/config';
 import { parseTTL, formatTTL } from './utils';
+import { ac, adminRole, memberRole, ownerRole } from './permissions';
 
 const OTP_TTL = parseTTL(process.env.ONE_TIME_CODE_TTL, 60); // 1 minute default
 const LINK_TTL = parseTTL(process.env.ONE_TIME_LINK_TTL, 600); // 10 minutes default
+const INVITATION_TTL = parseTTL(process.env.INVITATION_EXPIRES_IN, 172800); // 48 hours default
+const ORG_LIMIT = parseInt(process.env.ORGANIZATION_LIMIT || '3', 10);
+const MEMBERSHIP_LIMIT = parseInt(process.env.MEMBERSHIP_LIMIT || '5', 10);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -150,6 +155,44 @@ export const auth = betterAuth({
     haveIBeenPwned(),
     lastLoginMethod({
       storeInDatabase: true
+    }),
+    organization({
+      ac: ac,
+      roles: {
+        admin: adminRole,
+        member: memberRole,
+        owner: ownerRole,
+      },
+      allowUserToCreateOrganization: true,
+      organizationLimit: ORG_LIMIT,
+      membershipLimit: MEMBERSHIP_LIMIT,
+      teams: {
+        enabled: true,
+      },
+      dynamicAccessControl: {
+        enabled: true,
+      },
+      requireEmailVerificationOnInvitation: true,
+      cancelPendingInvitationsOnReInvite: true,
+      invitationExpiresIn: INVITATION_TTL,
+      async sendInvitationEmail(data) {
+        const inviteLink = `${process.env.BETTER_AUTH_URL}/accept-invitation/${data.id}`;
+        try {
+          await email.send({
+            to: data.email,
+            subject: "You've been invited to join an organization",
+            react: InvitationEmail({
+              url: inviteLink,
+              email: data.email,
+              inviterName: data.inviter?.user?.name || data.inviter?.user?.email,
+              organizationName: data.organization?.name,
+            }),
+          });
+        } catch (err) {
+          // Log but don't rethrow — a failed email should not roll back the invitation record.
+          console.error('[sendInvitationEmail] Failed to send invitation email to', data.email, err);
+        }
+      },
     }),
   ],
 

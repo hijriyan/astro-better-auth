@@ -18,8 +18,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
+import { useInvitationCount } from "@/components/notifications-page"
 
 export function NavUser({
   user,
@@ -31,6 +33,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const invitationCount = useInvitationCount()
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -90,9 +93,14 @@ export function NavUser({
                 <CreditCardIcon />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem render={<a href="/notifications" />}>
                 <BellIcon />
                 Notifications
+                {invitationCount > 0 && (
+                  <Badge className="ml-auto h-5 min-w-5 px-1.5 text-xs">
+                    {invitationCount}
+                  </Badge>
+                )}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

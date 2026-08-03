@@ -119,7 +119,7 @@ export function AccountForm({ user, accounts, socialProviders }: AccountFormProp
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList variant="line" className="h-auto w-full justify-start gap-6 bg-transparent p-0 border-b">
+        <TabsList variant="line" className="h-auto w-full justify-start gap-6 bg-transparent p-0 border-b overflow-x-auto flex-nowrap whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <TabsTrigger value="general" className="gap-2">
             <User className="size-4" />
             General

@@ -2,14 +2,15 @@
 import '../styles/globals.css';
 import { auth } from '../lib/auth';
 import { DashboardShell } from '../components/dashboard-shell';
-import { Toaster } from '../components/ui/toast';
+import { Toaster } from '../components/ui/sonner';
 
 interface Props {
   title?: string;
   requireAdmin?: boolean;
+  breadcrumbs?: { label: string, href?: string }[];
 }
 
-const { title = 'Dashboard', requireAdmin = false } = Astro.props;
+const { title = 'Dashboard', requireAdmin = false, breadcrumbs } = Astro.props;
 
 const session = await auth.api.getSession({
   headers: Astro.request.headers,
@@ -47,7 +48,7 @@ const user = {
     <title>{title}</title>
   </head>
   <body>
-    <DashboardShell user={user} title={title} client:load>
+    <DashboardShell user={user} title={title} breadcrumbs={breadcrumbs} client:load>
       <slot />
     </DashboardShell>
     <Toaster client:load />
