@@ -18,17 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxChips,
-  ComboboxChip,
-  ComboboxChipsInput,
-  ComboboxEmpty,
-  ComboboxValue,
-} from "@/components/ui/combobox"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -36,29 +25,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-
-type PermissionItem = {
-  id: string
-  resource: string
-  actions: string[]
-}
+import { PermissionsBuilder } from "@/components/permissions-builder"
 
 export function AccessControlTab({ org, initialRoles, onRolesChange, permissions }: {
   org: any
@@ -82,9 +51,7 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
   // Form State
   const [roleName, setRoleName] = React.useState("")
   const [originalRoleName, setOriginalRoleName] = React.useState("")
-  const [rolePermissions, setRolePermissions] = React.useState<PermissionItem[]>([])
-
-  const availableResources = Object.keys(statement)
+  const [rolePermissions, setRolePermissions] = React.useState<Record<string, string[]>>({})
 
   const fetchRoles = React.useCallback(async () => {
     setIsLoading(true)
@@ -126,25 +93,11 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
     }
   }
 
-  const handleAddPermission = () => {
-    setRolePermissions([...rolePermissions, { id: crypto.randomUUID(), resource: "", actions: [] }])
-  }
-
-  const handleRemovePermission = (id: string) => {
-    setRolePermissions(rolePermissions.filter((p) => p.id !== id))
-  }
-
-  const handleResourceChange = (id: string, resource: string) => {
-    setRolePermissions(
-      rolePermissions.map((p) => (p.id === id ? { ...p, resource, actions: [] } : p))
-    )
-  }
-
   const openCreateRole = () => {
     setDialogMode("create")
     setRoleName("")
     setOriginalRoleName("")
-    setRolePermissions([])
+    setRolePermissions({})
     setEditingRoleId(null)
     setIsDialogOpen(true)
   }
@@ -156,12 +109,7 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
     setRoleName(name)
     setOriginalRoleName(name)
     const perms = roleData.permission || roleData.permissions || {}
-    const parsed = Object.keys(perms).map((res) => ({
-      id: crypto.randomUUID(),
-      resource: res,
-      actions: perms[res] as string[],
-    }))
-    setRolePermissions(parsed)
+    setRolePermissions(perms)
     setIsDialogOpen(true)
   }
 
@@ -170,23 +118,12 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
       toast.error("Role name is required")
       return
     }
-    if (rolePermissions.length === 0) {
+    if (Object.keys(rolePermissions).length === 0) {
       toast.error("Please add at least one permission")
       return
     }
-    const invalidItem = rolePermissions.find((p) => !p.resource || p.actions.length === 0)
-    if (invalidItem) {
-      toast.error("Please ensure all permissions have a resource and at least one action selected.")
-      return
-    }
 
-    const parsedPermissions = rolePermissions.reduce(
-      (acc, curr) => {
-        acc[curr.resource] = curr.actions
-        return acc
-      },
-      {} as Record<string, string[]>
-    )
+    const parsedPermissions = rolePermissions
 
     setIsSubmitting(true)
     try {
@@ -207,7 +144,7 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
       }
       setIsDialogOpen(false)
       setRoleName("")
-      setRolePermissions([])
+      setRolePermissions({})
       setEditingRoleId(null)
       fetchRoles()
     } catch (err: any) {
@@ -367,118 +304,11 @@ export function AccessControlTab({ org, initialRoles, onRolesChange, permissions
             )}
 
             <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <Label>Permissions</Label>
-                <Button variant="outline" size="sm" onClick={handleAddPermission}>
-                  <Plus className="h-3 w-3 mr-2" />
-                  Add Permission
-                </Button>
-              </div>
-
-              {rolePermissions.length === 0 ? (
-                <div className="text-center p-6 border border-dashed rounded-lg text-sm text-muted-foreground">
-                  No permissions added. Click "Add Permission" to configure resource access.
-                </div>
-              ) : (
-                <div className="max-h-[300px] overflow-y-auto border rounded-md">
-                  <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        <TableHead className="w-[200px]">Resource</TableHead>
-                        <TableHead>Actions</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rolePermissions.map((perm) => {
-                        const validActions = perm.resource
-                          ? (statement as unknown as Record<string, string[]>)[perm.resource] || []
-                          : []
-
-                        return (
-                          <TableRow key={perm.id}>
-                            <TableCell className="align-top">
-                              <Select
-                                value={perm.resource}
-                                onValueChange={(val) => handleResourceChange(perm.id, val || "")}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a resource..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableResources.map((res) => (
-                                    <SelectItem
-                                      key={res}
-                                      value={res}
-                                      disabled={rolePermissions.some(
-                                        (p) => p.id !== perm.id && p.resource === res
-                                      )}
-                                    >
-                                      {res}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-
-                            <TableCell className="align-top">
-                              <Combobox
-                                multiple
-                                value={perm.actions}
-                                onValueChange={(actions: string[]) => {
-                                  setRolePermissions(
-                                    rolePermissions.map((p) =>
-                                      p.id === perm.id ? { ...p, actions } : p
-                                    )
-                                  )
-                                }}
-                              >
-                                <ComboboxChips>
-                                  <ComboboxValue>
-                                    {perm.actions.map((action) => (
-                                      <ComboboxChip key={action}>{action}</ComboboxChip>
-                                    ))}
-                                  </ComboboxValue>
-                                  <ComboboxChipsInput
-                                    placeholder={
-                                      perm.resource ? "Select actions..." : "Select resource first"
-                                    }
-                                    disabled={!perm.resource}
-                                  />
-                                </ComboboxChips>
-                                <ComboboxContent>
-                                  <ComboboxList>
-                                    {validActions.length === 0 ? (
-                                      <ComboboxEmpty>No actions available.</ComboboxEmpty>
-                                    ) : (
-                                      validActions.map((action) => (
-                                        <ComboboxItem key={action} value={action}>
-                                          {action}
-                                        </ComboboxItem>
-                                      ))
-                                    )}
-                                  </ComboboxList>
-                                </ComboboxContent>
-                              </Combobox>
-                            </TableCell>
-
-                            <TableCell className="align-top text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleRemovePermission(perm.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+              <PermissionsBuilder
+                value={rolePermissions}
+                onChange={setRolePermissions}
+                emptyStateMessage="No permissions added. Click 'Add Resource' to configure resource access."
+              />
             </div>
           </div>
           <DialogFooter>

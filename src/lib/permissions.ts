@@ -3,6 +3,7 @@ import { defaultStatements } from "better-auth/plugins/organization/access";
 
 export const statement = {
     ...defaultStatements,
+    apiKey: ["create", "read", "update", "delete"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -13,6 +14,7 @@ export const adminRole = ac.newRole({
     invitation: ["create", "cancel"],
     team: ["create", "update", "delete"],
     ac: ["create", "read", "update", "delete"],
+    apiKey: ["create", "read", "update", "delete"],
 });
 
 export const ownerRole = ac.newRole({
@@ -21,6 +23,7 @@ export const ownerRole = ac.newRole({
     invitation: ["create", "cancel"],
     team: ["create", "update", "delete"],
     ac: ["create", "read", "update", "delete"],
+    apiKey: ["create", "read", "update", "delete"],
 });
 
 export const memberRole = ac.newRole({
@@ -28,5 +31,6 @@ export const memberRole = ac.newRole({
     member: [],
     invitation: [],
     team: [],
-    ac: []
+    ac: [],
+    apiKey: [],
 });

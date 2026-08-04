@@ -1,0 +1,39 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { auth } from '../../../lib/auth';
+import { ApiKeyDetails } from '../../../components/api-keys/api-key-details';
+import { ChevronLeft } from 'lucide-react';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/settings/api-keys');
+}
+---
+
+<DashboardLayout 
+  title="API Key Details"
+>
+  <div class="flex flex-col space-y-6">
+    <div>
+      <a href="/settings/api-keys" class="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4">
+        <ChevronLeft className="mr-1 h-4 w-4" />
+        Back to API Keys
+      </a>
+    </div>
+
+    <ApiKeyDetails 
+      client:load 
+      apiKeyId={id} 
+      configId="user-keys" 
+    />
+  </div>
+</DashboardLayout>

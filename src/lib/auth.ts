@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization } from 'better-auth/plugins';
+import { apiKey } from '@better-auth/api-key';
 import { twoFactorStrict } from './plugins/two-factor-strict';
 import { passkey } from '@better-auth/passkey';
 import { db } from '../db';
@@ -194,6 +195,10 @@ export const auth = betterAuth({
         }
       },
     }),
+    apiKey([
+      { configId: 'user-keys', references: 'user' },
+      { configId: 'org-keys', references: 'organization' }
+    ]),
   ],
 
   socialProviders: {

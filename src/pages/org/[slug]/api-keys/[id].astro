@@ -1,0 +1,92 @@
+---
+import DashboardLayout from '../../../../layouts/DashboardLayout.astro';
+import { auth } from '../../../../lib/auth';
+import { ApiKeyDetails } from '../../../../components/api-keys/api-key-details';
+import { ChevronLeft } from 'lucide-react';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect('/sign-in');
+}
+
+const { slug, id } = Astro.params;
+
+if (!slug || !id) {
+  return Astro.redirect('/');
+}
+
+let orgName = slug;
+let orgId = '';
+
+try {
+  const org = await auth.api.getFullOrganization({
+    headers: Astro.request.headers,
+    query: { organizationSlug: slug }
+  });
+  if (org) {
+    orgName = org.name;
+    orgId = org.id;
+  } else {
+    return Astro.redirect('/');
+  }
+} catch (e) {
+  console.error("Failed to fetch organization", e);
+  return Astro.redirect('/');
+}
+
+// Check permissions
+const permCheck = await auth.api.hasPermission({
+  headers: Astro.request.headers,
+  body: {
+    organizationId: orgId,
+    permissions: {
+      apiKey: ["read", "update"]
+    }
+  }
+});
+
+const canRead = permCheck?.success ?? false;
+// Note: Better Auth currently doesn't return detailed success per action in hasPermission 
+// when we query multiple actions at once, so we might need to check them individually,
+// but for simplicity, we can do two checks if we want exact booleans, or just pass the
+// boolean if we checked them properly like in org/[slug].astro. Let's do two checks.
+
+const readCheck = await auth.api.hasPermission({
+  headers: Astro.request.headers,
+  body: { organizationId: orgId, permissions: { apiKey: ["read"] } }
+});
+if (!readCheck?.success) {
+  return Astro.redirect(`/org/${slug}`);
+}
+
+const updateCheck = await auth.api.hasPermission({
+  headers: Astro.request.headers,
+  body: { organizationId: orgId, permissions: { apiKey: ["update"] } }
+});
+const canUpdate = updateCheck?.success ?? false;
+
+---
+
+<DashboardLayout 
+  title="API Key Details"
+>
+  <div class="flex flex-col space-y-6">
+    <div>
+      <a href={`/org/${slug}`} class="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4">
+        <ChevronLeft className="mr-1 h-4 w-4" />
+        Back to Organization
+      </a>
+    </div>
+
+    <ApiKeyDetails 
+      client:load 
+      apiKeyId={id} 
+      configId="org-keys" 
+      organizationId={orgId}
+      canUpdate={canUpdate}
+    />
+  </div>
+</DashboardLayout>

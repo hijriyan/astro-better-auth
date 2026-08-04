@@ -9,6 +9,7 @@ export interface OrgPermissions {
   invitation:   { create: boolean; cancel: boolean }
   team:         { create: boolean; update: boolean; delete: boolean }
   ac:           { read: boolean; create: boolean; update: boolean; delete: boolean }
+  apiKey:       { read: boolean; create: boolean; update: boolean; delete: boolean }
 }
 
 export const DEFAULT_PERMISSIONS: OrgPermissions = {
@@ -17,4 +18,5 @@ export const DEFAULT_PERMISSIONS: OrgPermissions = {
   invitation:   { create: false, cancel: false },
   team:         { create: false, update: false, delete: false },
   ac:           { read: false, create: false, update: false, delete: false },
+  apiKey:       { read: false, create: false, update: false, delete: false },
 };

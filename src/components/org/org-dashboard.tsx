@@ -8,9 +8,10 @@ import { MembersTab } from "./members-tab"
 import { TeamsTab } from "./teams-tab"
 import { InvitationsTab } from "./invitations-tab"
 import { AccessControlTab } from "./access-control-tab"
+import { ApiKeysTab } from "./api-keys-tab"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CircleAlert, SettingsIcon, UsersIcon, UsersRoundIcon, MailIcon, ShieldIcon } from "lucide-react"
+import { CircleAlert, SettingsIcon, UsersIcon, UsersRoundIcon, MailIcon, ShieldIcon, KeyIcon } from "lucide-react"
 import { DEFAULT_PERMISSIONS, type OrgPermissions } from "@/lib/org-permissions"
 
 interface OrgDashboardProps {
@@ -109,6 +110,12 @@ export function OrgDashboard({ slug, initialOrg, initialRoles, permissions = DEF
             <MailIcon />
             Invitations
           </TabsTrigger>
+          {permissions.apiKey.read && (
+            <TabsTrigger value="api-keys">
+              <KeyIcon />
+              API Keys
+            </TabsTrigger>
+          )}
           {permissions.ac.read && (
             <TabsTrigger value="access-control">
               <ShieldIcon />
@@ -134,6 +141,11 @@ export function OrgDashboard({ slug, initialOrg, initialRoles, permissions = DEF
           <TabsContent value="invitations">
             <InvitationsTab org={orgData} invitations={orgData.invitations} customRoles={customRoles} permissions={permissions} />
           </TabsContent>
+          {permissions.apiKey.read && (
+            <TabsContent value="api-keys">
+              <ApiKeysTab org={orgData} permissions={permissions} />
+            </TabsContent>
+          )}
           {permissions.ac.read && (
             <TabsContent value="access-control">
               <AccessControlTab org={orgData} initialRoles={initialRoles ?? undefined} onRolesChange={setCustomRoles} permissions={permissions} />
