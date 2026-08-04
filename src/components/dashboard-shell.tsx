@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/site-header'
 import type { BreadcrumbType } from '@/components/site-header'
 
 interface DashboardShellProps {
-  user: { name: string; email: string; image?: string }
+  user: { id?: string; name: string; email: string; image?: string; role?: string }
   title: string
   breadcrumbs?: BreadcrumbType[]
   children?: React.ReactNode

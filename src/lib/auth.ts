@@ -152,7 +152,9 @@ export const auth = betterAuth({
       },
     }),
     passkey(),
-    admin(),
+    admin({
+      adminUserIds: (process.env.ADMIN_USER_IDS || '').split(',').map(v => v.trim()).filter(Boolean)
+    }),
     haveIBeenPwned(),
     lastLoginMethod({
       storeInDatabase: true

@@ -20,7 +20,10 @@ if (!session) {
   return Astro.redirect('/sign-in');
 }
 
-if (requireAdmin && session.user.role !== 'admin') {
+const adminUserIds = (process.env.ADMIN_USER_IDS || '').split(',').map(v => v.trim()).filter(Boolean);
+const isUserAdmin = session.user.role === 'admin' || adminUserIds.includes(session.user.id);
+
+if (requireAdmin && !isUserAdmin) {
   return Astro.redirect('/');
 }
 
@@ -34,9 +37,11 @@ async function gravatarUrl(email: string, size = 80) {
 }
 
 const user = {
+  id: session.user.id,
   name: session.user.name || 'User',
   email: session.user.email || '',
   image: session.user.image || await gravatarUrl(session.user.email),
+  role: isUserAdmin ? 'admin' : (session.user.role || 'user'),
 };
 ---
 

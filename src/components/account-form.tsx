@@ -20,6 +20,7 @@ import { PasskeysSection } from "./account/passkeys-section";
 
 interface AccountFormProps {
   user: {
+    id: string;
     name: string;
     email: string;
     image?: string;

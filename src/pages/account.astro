@@ -29,6 +29,7 @@ const accounts = await auth.api.listUserAccounts({
 const image = session.user.image || await gravatarUrl(session.user.email);
 
 const user = {
+  id: session.user.id,
   name: session.user.name || 'User',
   email: session.user.email || '',
   image,

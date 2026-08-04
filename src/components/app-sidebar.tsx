@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, CommandIcon, BuildingIcon, PlusIcon, SettingsIcon, KeyIcon } from "lucide-react"
+import { LayoutDashboardIcon, CommandIcon, BuildingIcon, PlusIcon, SettingsIcon, KeyIcon, ShieldIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -23,9 +23,11 @@ import { OrgForm } from "@/components/org-form"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: {
+    id?: string
     name: string
     email: string
     image?: string
+    role?: string
   }
 }
 
@@ -72,6 +74,14 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       ],
     },
   ]
+
+  if (user?.role === "admin") {
+    navMain.push({
+      title: "Admin",
+      url: "/admin",
+      icon: <ShieldIcon />,
+    })
+  }
 
   const navUser = {
     name: user?.name ?? "User",

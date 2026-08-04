@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CircleAlert, User as UserIcon } from "lucide-react";
+import { CircleAlert, User as UserIcon, Copy, Check } from "lucide-react";
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -20,6 +20,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface ProfileFormProps {
   user: {
+    id: string;
     name: string;
     username?: string;
   };
@@ -28,6 +29,13 @@ interface ProfileFormProps {
 export function ProfileForm({ user }: ProfileFormProps) {
   const [error, setError] = useState<{ message?: string; code?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const copyUserId = () => {
+    navigator.clipboard.writeText(user.id);
+    setHasCopied(true);
+    setTimeout(() => setHasCopied(false), 2000);
+  };
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -80,6 +88,25 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormItem>
+              <FormLabel>User ID</FormLabel>
+              <FormControl>
+                <div className="flex items-center space-x-2">
+                  <Input value={user.id} disabled readOnly className="font-mono text-xs bg-muted/50" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={copyUserId}
+                    title="Copy User ID"
+                  >
+                    {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </FormControl>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="name"

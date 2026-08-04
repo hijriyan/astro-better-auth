@@ -102,4 +102,3 @@ export const socialProviderMaps: Record<string, SocialProviderType> = {
   wechat: { label: 'WeChat', icon: SiWechat, color: SiWechatHex },
   zoom: { label: 'Zoom', icon: SiZoom, color: SiZoomHex },
 };
-
