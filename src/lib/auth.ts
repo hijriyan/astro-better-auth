@@ -196,8 +196,8 @@ export const auth = betterAuth({
       },
     }),
     apiKey([
-      { configId: 'user-keys', references: 'user' },
-      { configId: 'org-keys', references: 'organization' }
+      { configId: 'user-keys', references: 'user', defaultPrefix: 'usr_' },
+      { configId: 'org-keys', references: 'organization', defaultPrefix: 'org_' }
     ]),
   ],
 
