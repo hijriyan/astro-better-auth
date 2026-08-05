@@ -1,6 +1,5 @@
 import * as React from "react"
-import { MoreHorizontal, UserCog, Ban, CheckCircle, Trash2, ExternalLink } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { MoreHorizontal, Trash2, ExternalLink } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,

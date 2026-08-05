@@ -1,4 +1,4 @@
-import * as React from "react"
+
 import { UsersTable } from "./users-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield } from "lucide-react"

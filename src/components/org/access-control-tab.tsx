@@ -2,15 +2,15 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { authClient } from "@/lib/auth-client"
 import type { OrgPermissions } from "@/lib/org-permissions"
 import { DataTable } from "@/components/data-table"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Plus, Trash2, X, Pencil } from "lucide-react"
+import { MoreHorizontal, Plus, Trash2, Pencil } from "lucide-react"
 import { toast } from "sonner"
-import { statement } from "@/lib/permissions"
+
 import {
   DropdownMenu,
   DropdownMenuContent,

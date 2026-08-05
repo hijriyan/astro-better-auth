@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Shield, Mail, Calendar, Key, AlertTriangle, ArrowLeft, Loader2, Save, Ban, CheckCircle, UserCog, Lock, CircleAlert } from "lucide-react"
+import { Shield, Mail, Key, AlertTriangle, ArrowLeft, Loader2, Save, Ban, CheckCircle, UserCog, Lock, CircleAlert } from "lucide-react"
 import { buttonVariants, Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
