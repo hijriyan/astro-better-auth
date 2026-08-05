@@ -1,14 +1,14 @@
 ---
-import DashboardLayout from '../layouts/DashboardLayout.astro';
-import { NotificationsPage } from '../components/notifications-page';
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { NotificationsPage } from "../components/notifications-page";
 
-const breadcrumbs = [
-  { label: "Notifications" }
-];
+const breadcrumbs = [{ label: "Notifications" }];
 ---
 
 <DashboardLayout title="Notifications" breadcrumbs={breadcrumbs}>
-  <div class="flex flex-col gap-4 py-4 md:gap-8 md:py-8 px-4 lg:px-6 max-w-4xl mx-auto w-full">
+  <div
+    class="flex flex-col gap-4 py-4 md:gap-8 md:py-8 px-4 lg:px-6 max-w-4xl w-full"
+  >
     <NotificationsPage client:load />
   </div>
 </DashboardLayout>

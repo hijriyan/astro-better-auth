@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, CommandIcon, BuildingIcon, PlusIcon, SettingsIcon, KeyIcon, ShieldIcon } from "lucide-react"
+import { LayoutDashboardIcon, CommandIcon, BuildingIcon, PlusIcon, KeyIcon, ShieldIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -62,16 +62,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       ],
     },
     {
-      title: "Settings",
-      url: "#",
-      icon: <SettingsIcon />,
-      items: [
-        {
-          title: "API Keys",
-          url: "/settings/api-keys",
-          icon: <KeyIcon className="w-3 h-3" />,
-        },
-      ],
+      title: "API Keys",
+      url: "/api-keys",
+      icon: <KeyIcon />,
     },
   ]
 

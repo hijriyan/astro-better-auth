@@ -78,7 +78,7 @@ export function AcceptInvitationClient({ invitationId }: { invitationId: string 
   const inviterEmail = invitation?.inviterEmail || invitation?.inviter?.email || 'Someone';
 
   return (
-    <Card className="w-full max-w-md mx-auto mt-8">
+    <Card className="w-full max-w-md mt-8">
       <CardHeader>
         <CardTitle>Organization Invitation</CardTitle>
         <CardDescription>

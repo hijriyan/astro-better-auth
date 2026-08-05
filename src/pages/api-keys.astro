@@ -1,0 +1,30 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { auth } from "../lib/auth";
+import { ApiKeysManager } from "../components/api-keys/api-keys-manager";
+import "dotenv/config";
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (!session) {
+  return Astro.redirect("/sign-in");
+}
+
+const breadcrumbs = [
+  { label: "API Keys", href: "/api-keys" },
+];
+---
+
+<DashboardLayout title="API Keys" breadcrumbs={breadcrumbs}>
+  <div class="max-w-4xl">
+    <ApiKeysManager
+      configId="user-keys"
+      title="Personal API Keys"
+      description="Manage personal API keys scoped to your user account."
+      viewUrlPrefix="/api-keys"
+      client:load
+    />
+  </div>
+</DashboardLayout>

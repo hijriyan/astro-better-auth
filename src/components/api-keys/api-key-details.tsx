@@ -225,7 +225,7 @@ export function ApiKeyDetails({ apiKeyId, configId, organizationId, canUpdate = 
   // ── view mode ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-card p-6">

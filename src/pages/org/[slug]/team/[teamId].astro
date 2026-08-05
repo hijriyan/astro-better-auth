@@ -1,21 +1,21 @@
 ---
-import DashboardLayout from '../../../../layouts/DashboardLayout.astro';
-import { auth } from '../../../../lib/auth';
-import { TeamDashboard } from '../../../../components/org/team-dashboard';
-import type { OrgPermissions } from '../../../../lib/org-permissions';
+import DashboardLayout from "../../../../layouts/DashboardLayout.astro";
+import { auth } from "../../../../lib/auth";
+import { TeamDashboard } from "../../../../components/org/team-dashboard";
+import type { OrgPermissions } from "../../../../lib/org-permissions";
 
 const session = await auth.api.getSession({
   headers: Astro.request.headers,
 });
 
 if (!session) {
-  return Astro.redirect('/sign-in');
+  return Astro.redirect("/sign-in");
 }
 
 const { slug, teamId } = Astro.params;
 
 if (!slug || !teamId) {
-  return Astro.redirect('/');
+  return Astro.redirect("/");
 }
 
 let orgName = slug;
@@ -26,7 +26,7 @@ let initialTeamMembers: any[] = [];
 try {
   const org = await auth.api.getFullOrganization({
     headers: Astro.request.headers,
-    query: { organizationSlug: slug }
+    query: { organizationSlug: slug },
   });
   if (org) {
     orgName = org.name;
@@ -45,17 +45,21 @@ try {
 
 const permissions: OrgPermissions = {
   organization: { update: false, delete: false },
-  member:       { create: false, update: false, delete: false },
-  invitation:   { create: false, cancel: false },
-  team:         { create: false, update: false, delete: false },
-  ac:           { read: false, create: false, update: false, delete: false },
-  apiKey:       { read: false, create: false, update: false, delete: false },
+  member: { create: false, update: false, delete: false },
+  invitation: { create: false, cancel: false },
+  team: { create: false, update: false, delete: false },
+  ac: { read: false, create: false, update: false, delete: false },
+  apiKey: { read: false, create: false, update: false, delete: false },
 };
 
 if (initialOrg) {
-  const checks: Array<{ path: keyof OrgPermissions; action: string; perm: Record<string, string[]> }> = [
-    { path: "team",   action: "update", perm: { team:   ["update"] } },
-    { path: "team",   action: "delete", perm: { team:   ["delete"] } },
+  const checks: Array<{
+    path: keyof OrgPermissions;
+    action: string;
+    perm: Record<string, string[]>;
+  }> = [
+    { path: "team", action: "update", perm: { team: ["update"] } },
+    { path: "team", action: "delete", perm: { team: ["delete"] } },
     { path: "member", action: "create", perm: { member: ["create"] } },
     { path: "member", action: "delete", perm: { member: ["delete"] } },
   ];
@@ -65,8 +69,8 @@ if (initialOrg) {
       auth.api.hasPermission({
         headers: Astro.request.headers,
         body: { organizationId: initialOrg.id, permissions: perm },
-      })
-    )
+      }),
+    ),
   );
 
   results.forEach((result, i) => {
@@ -79,12 +83,21 @@ if (initialOrg) {
 const breadcrumbs = [
   { label: "Organization", href: "/" },
   { label: orgName, href: `/org/${slug}` },
-  { label: teamName }
+  { label: teamName },
 ];
 ---
 
 <DashboardLayout title={`Team: ${teamName}`} breadcrumbs={breadcrumbs}>
-  <div class="flex flex-col gap-4 py-4 md:gap-8 md:py-8 px-4 lg:px-6 max-w-6xl mx-auto w-full">
-    <TeamDashboard slug={slug} teamId={teamId} initialOrg={initialOrg} initialTeamMembers={initialTeamMembers} permissions={permissions} client:load />
+  <div
+    class="flex flex-col gap-4 py-4 md:gap-8 md:py-8 px-4 lg:px-6 max-w-6xl w-full"
+  >
+    <TeamDashboard
+      slug={slug}
+      teamId={teamId}
+      initialOrg={initialOrg}
+      initialTeamMembers={initialTeamMembers}
+      permissions={permissions}
+      client:load
+    />
   </div>
 </DashboardLayout>
