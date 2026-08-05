@@ -117,12 +117,14 @@ export function AccessControlTab({ initialRoles, onRolesChange, permissions }: {
       toast.error("Role name is required")
       return
     }
-    if (Object.keys(rolePermissions).length === 0) {
-      toast.error("Please add at least one permission")
-      return
-    }
 
-    const parsedPermissions = rolePermissions
+    // Clean up: remove resources that have empty action arrays
+    const parsedPermissions: Record<string, string[]> = {}
+    for (const [res, actions] of Object.entries(rolePermissions)) {
+      if (Array.isArray(actions) && actions.length > 0) {
+        parsedPermissions[res] = actions
+      }
+    }
 
     setIsSubmitting(true)
     try {
@@ -272,7 +274,7 @@ export function AccessControlTab({ initialRoles, onRolesChange, permissions }: {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
               {dialogMode === "create" ? "Create Custom Role" : "Update Custom Role"}
