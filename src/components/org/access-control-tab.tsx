@@ -29,8 +29,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { PermissionsBuilder } from "@/components/permissions-builder"
 
-export function AccessControlTab({ org, initialRoles, onRolesChange, permissions }: {
-  org: any
+export function AccessControlTab({ initialRoles, onRolesChange, permissions }: {
   initialRoles?: any[]
   onRolesChange?: (roles: any[]) => void
   permissions: OrgPermissions

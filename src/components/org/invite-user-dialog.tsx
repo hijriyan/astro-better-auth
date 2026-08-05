@@ -101,7 +101,7 @@ export function InviteUserDialog({
     }
   }, [open])
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleInvite = async (e: any) => {
     e.preventDefault()
     if (!email) return
     setIsInviting(true)

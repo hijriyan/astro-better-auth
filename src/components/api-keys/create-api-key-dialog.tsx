@@ -75,7 +75,7 @@ export function CreateApiKeyDialog({
   const updateAdv = (patch: Partial<ServerOnlyFields>) =>
     setAdvanced((prev) => ({ ...prev, ...patch }))
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: any) => {
     e.preventDefault()
     if (!name.trim()) { toast.error("Please enter a name for the API key."); return }
 

@@ -7,7 +7,7 @@ interface InvitationEmailProps {
   organizationName?: string;
 }
 
-export function InvitationEmail({ url, email, inviterName, organizationName }: InvitationEmailProps) {
+export function InvitationEmail({ url, inviterName, organizationName }: InvitationEmailProps) {
   const orgText = organizationName ? `the <strong>${organizationName}</strong> organization` : 'our organization';
   const inviterText = inviterName ? ` by <strong>${inviterName}</strong>` : '';
   const body = `You have been invited to join ${orgText}${inviterText}. Click the button below to accept the invitation and sign in.`;

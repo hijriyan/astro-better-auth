@@ -26,7 +26,7 @@ export function GeneralTab({ org, permissions }: { org: any; permissions: OrgPer
   const [isLeaving, setIsLeaving] = React.useState(false)
 
   const { data: activeMember } = authClient.useActiveMember()
-  const { data: organizations } = authClient.useListOrganizations()
+  authClient.useListOrganizations()
   const isOwner = activeMember?.role === "owner"
 
   // Owners can only leave if there's at least one other owner

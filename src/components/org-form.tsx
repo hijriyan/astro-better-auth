@@ -80,7 +80,7 @@ export function OrgForm({
 
     const timeoutId = setTimeout(async () => {
       try {
-        const { data, error } = await authClient.organization.checkSlug({ slug: slugValue })
+        const { error } = await authClient.organization.checkSlug({ slug: slugValue })
         
         if (error) {
           if (error.status === 400 || (error.code as string) === 'ORGANIZATION_SLUG_ALREADY_TAKEN') {

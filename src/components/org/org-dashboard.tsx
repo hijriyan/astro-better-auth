@@ -148,7 +148,7 @@ export function OrgDashboard({ slug, initialOrg, initialRoles, permissions = DEF
           )}
           {permissions.ac.read && (
             <TabsContent value="access-control">
-              <AccessControlTab org={orgData} initialRoles={initialRoles ?? undefined} onRolesChange={setCustomRoles} permissions={permissions} />
+              <AccessControlTab initialRoles={initialRoles ?? undefined} onRolesChange={setCustomRoles} permissions={permissions} />
             </TabsContent>
           )}
         </div>

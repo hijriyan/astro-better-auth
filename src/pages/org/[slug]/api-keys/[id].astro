@@ -18,7 +18,6 @@ if (!slug || !id) {
   return Astro.redirect('/');
 }
 
-let orgName = slug;
 let orgId = '';
 
 try {
@@ -27,7 +26,6 @@ try {
     query: { organizationSlug: slug }
   });
   if (org) {
-    orgName = org.name;
     orgId = org.id;
   } else {
     return Astro.redirect('/');
@@ -37,18 +35,6 @@ try {
   return Astro.redirect('/');
 }
 
-// Check permissions
-const permCheck = await auth.api.hasPermission({
-  headers: Astro.request.headers,
-  body: {
-    organizationId: orgId,
-    permissions: {
-      apiKey: ["read", "update"]
-    }
-  }
-});
-
-const canRead = permCheck?.success ?? false;
 // Note: Better Auth currently doesn't return detailed success per action in hasPermission 
 // when we query multiple actions at once, so we might need to check them individually,
 // but for simplicity, we can do two checks if we want exact booleans, or just pass the

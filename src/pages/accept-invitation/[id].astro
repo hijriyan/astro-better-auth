@@ -14,9 +14,7 @@ const session = await auth.api.getSession({
 });
 
 if (!session) {
-  const url = new URL(Astro.request.url);
-  const callbackURL = encodeURIComponent(url.pathname);
-  return Astro.redirect(`/sign-in?callbackURL=${callbackURL}`);
+  return Astro.redirect('/sign-in?callbackURL=' + encodeURIComponent(new URL(Astro.request.url).pathname));
 }
 ---
 
