@@ -1,6 +1,8 @@
 ---
 import '../styles/globals.css';
 import { Toaster } from '../components/ui/sonner';
+import ThemeScript from '../components/ThemeScript.astro';
+import { ThemeProvider } from '../components/theme-provider';
 
 interface Props {
   title?: string;
@@ -15,11 +17,14 @@ const { title = 'Better Auth Dashboard' } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <ThemeScript />
   </head>
   <body class="min-h-screen bg-background">
-    <main class="flex min-h-screen flex-col items-center justify-center p-4">
-      <slot />
-    </main>
-    <Toaster client:load />
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange client:load>
+      <main class="flex min-h-screen flex-col items-center justify-center p-4">
+        <slot />
+      </main>
+      <Toaster client:load />
+    </ThemeProvider>
   </body>
 </html>
