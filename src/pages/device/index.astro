@@ -7,10 +7,7 @@ const session = await auth.api.getSession({ headers: Astro.request.headers });
 const userCode = new URL(Astro.request.url).searchParams.get('user_code') ?? '';
 
 if (!session) {
-  const callbackURL = userCode
-    ? `/device?user_code=${encodeURIComponent(userCode)}`
-    : '/device';
-  return Astro.redirect(`/sign-in?callbackURL=${encodeURIComponent(callbackURL)}`);
+  return Astro.redirect(`/sign-in?callbackURL=${encodeURIComponent(userCode ? `/device?user_code=${encodeURIComponent(userCode)}` : '/device')}`);
 }
 ---
 
