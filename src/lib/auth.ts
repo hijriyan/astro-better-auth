@@ -57,6 +57,7 @@ const DEVICE_CODE_INTERVAL = (Number.isInteger(DEVICE_CODE_INTERVAL_RAW) && DEVI
     })();
 
 export const auth = betterAuth({
+  appName: process.env.APP_NAME || "astro-better-auth",
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: authSchema,
