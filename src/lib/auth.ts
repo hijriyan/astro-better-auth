@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization, deviceAuthorization } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization, deviceAuthorization, bearer } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { toTimeString, validateClientId } from './device-utils';
 import { twoFactorStrict } from './plugins/two-factor-strict';
@@ -249,6 +249,7 @@ export const auth = betterAuth({
       validateClient: async (clientId: string) =>
         validateClientId(clientId, process.env.DEVICE_CODE_ALLOWED_CLIENTS),
     }),
+    bearer(),
   ],
 
   socialProviders: {
