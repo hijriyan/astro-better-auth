@@ -1,11 +1,19 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: bauth-postgres
+  app:
+    build: .
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bauth
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/bauth"
+    ports:
+      - "4321:4321"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:18-alpine
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
