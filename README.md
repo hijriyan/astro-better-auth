@@ -14,8 +14,10 @@ A minimal, production-ready starter kit featuring Astro, React, and Better Auth.
 This starter kit pre-integrates several powerful features directly into Astro, allowing you to hit the ground running:
 
 - **Advanced Authentication**: Better Auth is natively integrated as an Astro API endpoint, featuring Email/Password, Passkeys, and a custom UI for Device Authorization flows out of the box.
+- **Robust Security**: Built-in strict Two-Factor Authentication (2FA), Cloudflare Turnstile CAPTCHA integration for bot protection, and password checks against compromised databases (Have I Been Pwned).
 - **Multi-Tenant Organizations**: Fully configured with Better Auth's Organization plugin, providing built-in team management, role-based access control (RBAC), and member invitations.
 - **Developer API Keys**: An integrated API key management system with granular permission scopes and customizable prefixes, complete with an interactive UI for your end-users.
+- **Admin Management**: Pre-configured admin roles and capabilities to oversee users and organizations.
 - **React & shadcn/ui Ecosystem**: Pre-configured with `@astrojs/react`, Tailwind CSS v4, and a suite of `shadcn/ui` components for rapid, beautiful UI development.
 - **Seamless Theming**: Built-in dark mode support using `next-themes` that automatically adapts your Astro and React components to the user's preferred color scheme.
 
