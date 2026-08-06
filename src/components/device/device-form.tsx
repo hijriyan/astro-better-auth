@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp';
 import { authClient } from '@/lib/auth-client';
 import { normaliseUserCode } from '../../lib/device-utils';
 import { CircleAlert } from 'lucide-react';
@@ -73,24 +74,35 @@ export function DeviceForm({ initialUserCode = '' }: DeviceFormProps) {
             <label htmlFor="user-code" className="text-sm font-medium">
               Device Code
             </label>
-            <input
+            <InputOTP
               id="user-code"
-              type="text"
+              maxLength={8}
               value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
-              maxLength={9}
-              aria-describedby="device-form-error"
-              autoComplete="off"
+              onChange={(value) => setUserCode(value.toUpperCase())}
               autoFocus
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 uppercase tracking-widest"
-              placeholder="XXXX-XXXX"
-            />
+              disabled={loading}
+              containerClassName="justify-center pt-2"
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={1} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={2} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={3} className="w-10 h-12 text-lg" />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot index={4} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={5} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={6} className="w-10 h-12 text-lg" />
+                <InputOTPSlot index={7} className="w-10 h-12 text-lg" />
+              </InputOTPGroup>
+            </InputOTP>
           </div>
 
           <Button
             type="submit"
             className="w-full"
-            disabled={loading || userCode.trim().length === 0}
+            disabled={loading || userCode.length < 8}
           >
             {loading ? 'Verifying...' : 'Continue'}
           </Button>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { authClient } from '@/lib/auth-client';
 import { CircleAlert } from 'lucide-react';
 
@@ -116,26 +116,26 @@ export function ApproveForm({ userCode }: ApproveFormProps) {
           </Alert>
         )}
 
-        {view === 'pending' && (
-          <div className="flex gap-3">
-            <Button
-              className="flex-1"
-              onClick={handleApprove}
-              disabled={loading}
-            >
-              {loading ? 'Processing...' : 'Approve'}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleDeny}
-              disabled={loading}
-            >
-              Deny
-            </Button>
-          </div>
-        )}
       </CardContent>
+      {view === 'pending' && (
+        <CardFooter className="flex gap-3">
+          <Button
+            className="flex-1"
+            onClick={handleApprove}
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : 'Approve'}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={handleDeny}
+            disabled={loading}
+          >
+            Deny
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
