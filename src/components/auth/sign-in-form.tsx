@@ -94,12 +94,14 @@ export function SignInForm({ socialProviders = {} }: {
 
     try {
       let result;
+      const fetchOptions = { onSuccess: () => {} }; // Prevent Better Auth from redirecting automatically
+
       if (loginMethod === 'email') {
-        result = await authClient.signIn.email({ email: values.identifier, password: values.password });
+        result = await authClient.signIn.email({ email: values.identifier, password: values.password, fetchOptions });
       } else if (loginMethod === 'username') {
-        result = await authClient.signIn.username({ username: values.identifier, password: values.password });
+        result = await authClient.signIn.username({ username: values.identifier, password: values.password, fetchOptions });
       } else {
-        result = await authClient.signIn.phoneNumber({ phoneNumber: values.identifier, password: values.password });
+        result = await authClient.signIn.phoneNumber({ phoneNumber: values.identifier, password: values.password, fetchOptions });
       }
 
       if (result.error) {
@@ -173,9 +175,10 @@ export function SignInForm({ socialProviders = {} }: {
     setError(null);
 
     try {
-      const result = await (authClient as any).signIn.emailOtp({
+      const result = await authClient.signIn.emailOtp({
         email: identifier,
         otp,
+        fetchOptions: { onSuccess: () => {} }
       });
 
       if (result.error) {
@@ -198,14 +201,19 @@ export function SignInForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      const result = await (authClient as any).twoFactor.verifyTotp({ code: twoFactorCode });
+      const result = await authClient.twoFactor.verifyTotp({ 
+        code: twoFactorCode,
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = getCallbackUrl();
+          }
+        }
+      });
       if (result.error) {
         setError({
           message: result.error.message || 'Invalid authenticator code. Please try again.',
           code: (result.error as any).code,
         });
-      } else {
-        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -218,7 +226,7 @@ export function SignInForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      const result = await (authClient as any).twoFactor.sendOtp();
+      const result = await authClient.twoFactor.sendOtp();
       if (result.error) setError({ message: 'Failed to send code. Please try again.' });
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -232,14 +240,19 @@ export function SignInForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      const result = await (authClient as any).twoFactor.verifyOtp({ code: twoFactorCode });
+      const result = await authClient.twoFactor.verifyOtp({ 
+        code: twoFactorCode,
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = getCallbackUrl();
+          }
+        }
+      });
       if (result.error) {
         setError({
           message: result.error.message || 'Invalid code. Please try again.',
           code: (result.error as any).code,
         });
-      } else {
-        window.location.href = getCallbackUrl();
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -252,7 +265,9 @@ export function SignInForm({ socialProviders = {} }: {
     setLoading(true);
     setError(null);
     try {
-      const result = await (authClient as any).signIn.passkey();
+      const result = await authClient.signIn.passkey({
+        fetchOptions: { onSuccess: () => {} }
+      });
       if (result?.error) setError({ message: result?.error?.message || 'Passkey sign in failed. Please try again.' });
       else if (!maybeHandleTwoFactorRedirect(result?.data)) window.location.href = getCallbackUrl();
     } catch {

@@ -11,7 +11,13 @@ export const authClient = createAuthClient({
     phoneNumberClient(),
     magicLinkClient(),
     emailOTPClient(),
-    twoFactorClient({ twoFactorPage: '/two-factor' }),
+    twoFactorClient({ 
+      onTwoFactorRedirect: () => {
+        const url = new URL(window.location.href);
+        const callbackURL = url.searchParams.get('callbackURL');
+        window.location.href = `/two-factor${callbackURL ? `?callbackURL=${encodeURIComponent(callbackURL)}` : ''}`;
+      }
+    }),
     passkeyClient(),
     adminClient(),
     lastLoginMethodClient(),

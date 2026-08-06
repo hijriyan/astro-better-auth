@@ -68,6 +68,7 @@ export function SignUpForm({ socialProviders = {} }: {
         name: values.name,
         username: values.username || undefined,
         phoneNumber: values.phoneNumber || undefined,
+        callbackURL: getCallbackUrl(),
       });
 
       if (result.error) {

@@ -49,7 +49,7 @@ export function TwoFactorForm() {
     setLoading(true);
     setError(null);
     try {
-      const result = await (authClient as any).twoFactor.sendOtp();
+      const result = await authClient.twoFactor.sendOtp();
       if (result.error) setError({ message: 'Failed to send code. Please try again.' });
     } catch {
       setError({ message: 'An error occurred. Please try again.' });
@@ -63,10 +63,16 @@ export function TwoFactorForm() {
     setError(null);
     try {
       let result;
+      const fetchOptions = {
+        onSuccess: () => {
+          window.location.href = callbackURL;
+        }
+      };
+
       if (view === 'totp') {
-        result = await (authClient as any).twoFactor.verifyTotp({ code: values.code });
+        result = await authClient.twoFactor.verifyTotp({ code: values.code, fetchOptions });
       } else {
-        result = await (authClient as any).twoFactor.verifyOtp({ code: values.code });
+        result = await authClient.twoFactor.verifyOtp({ code: values.code, fetchOptions });
       }
       
       if (result.error) {
@@ -74,8 +80,6 @@ export function TwoFactorForm() {
           message: result.error.message || (view === 'totp' ? 'Invalid authenticator code. Please try again.' : 'Invalid code. Please try again.'),
           code: (result.error as any).code,
         });
-      } else {
-        window.location.href = callbackURL;
       }
     } catch {
       setError({ message: 'An error occurred. Please try again.' });

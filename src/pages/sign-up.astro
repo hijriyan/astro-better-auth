@@ -2,6 +2,26 @@
 import BlankLayout from '../layouts/BlankLayout.astro';
 import { SignUpForm } from '../components/auth/sign-up-form';
 import { getActiveOAuthProviders } from '@/lib/server/oauth';
+import { auth } from '@/lib/auth';
+
+const session = await auth.api.getSession({
+  headers: Astro.request.headers,
+});
+
+if (session) {
+  const callbackURL = Astro.url.searchParams.get('callbackURL');
+  if (callbackURL) {
+    try {
+      const parsedUrl = new URL(callbackURL, Astro.url.origin);
+      if (parsedUrl.origin === Astro.url.origin) {
+        return Astro.redirect(parsedUrl.pathname + parsedUrl.search + parsedUrl.hash);
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+  return Astro.redirect('/');
+}
 
 const socialProviders = getActiveOAuthProviders();
 ---

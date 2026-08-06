@@ -83,7 +83,14 @@ export const auth = betterAuth({
     expiresIn: LINK_TTL,
     sendVerificationEmail: async ({ user, url }) => {
       const verifyUrl = new URL(url);
-      verifyUrl.searchParams.set('callbackURL', `${process.env.BETTER_AUTH_URL}/sign-in`);
+      const originalCallbackUrl = verifyUrl.searchParams.get('callbackURL');
+      
+      const targetUrl = new URL('/sign-in', process.env.BETTER_AUTH_URL);
+      if (originalCallbackUrl) {
+        targetUrl.searchParams.set('callbackURL', originalCallbackUrl);
+      }
+      
+      verifyUrl.searchParams.set('callbackURL', targetUrl.toString());
       await email.send({
         to: user.email,
         subject: 'Verify your email address',
