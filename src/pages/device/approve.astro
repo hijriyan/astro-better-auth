@@ -1,0 +1,16 @@
+---
+import BlankLayout from '../../layouts/BlankLayout.astro';
+import { ApproveForm } from '../../components/device/approve-form';
+import { auth } from '../../lib/auth';
+
+const session = await auth.api.getSession({ headers: Astro.request.headers });
+const userCode = new URL(Astro.request.url).searchParams.get('user_code') ?? '';
+
+if (!session) {
+  return Astro.redirect(`/sign-in?callbackURL=${encodeURIComponent('/device/approve')}`);
+}
+---
+
+<BlankLayout title="Approve Device">
+  <ApproveForm userCode={userCode} client:load />
+</BlankLayout>

@@ -1,0 +1,19 @@
+---
+import BlankLayout from '../../layouts/BlankLayout.astro';
+import { DeviceForm } from '../../components/device/device-form';
+import { auth } from '../../lib/auth';
+
+const session = await auth.api.getSession({ headers: Astro.request.headers });
+const userCode = new URL(Astro.request.url).searchParams.get('user_code') ?? '';
+
+if (!session) {
+  const callbackURL = userCode
+    ? `/device?user_code=${encodeURIComponent(userCode)}`
+    : '/device';
+  return Astro.redirect(`/sign-in?callbackURL=${encodeURIComponent(callbackURL)}`);
+}
+---
+
+<BlankLayout title="Device Authorization">
+  <DeviceForm initialUserCode={userCode} client:load />
+</BlankLayout>

@@ -1,7 +1,8 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization, deviceAuthorization } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
+import { toTimeString, validateClientId } from './device-utils';
 import { twoFactorStrict } from './plugins/two-factor-strict';
 import { passkey } from '@better-auth/passkey';
 import { db } from '../db';
@@ -21,6 +22,39 @@ const LINK_TTL = parseTTL(process.env.ONE_TIME_LINK_TTL, 600); // 10 minutes def
 const INVITATION_TTL = parseTTL(process.env.INVITATION_EXPIRES_IN, 172800); // 48 hours default
 const ORG_LIMIT = parseInt(process.env.ORGANIZATION_LIMIT || '3', 10);
 const MEMBERSHIP_LIMIT = parseInt(process.env.MEMBERSHIP_LIMIT || '5', 10);
+
+function validateDeviceTTL(
+  envKey: string,
+  raw: string | undefined,
+  min: number,
+  max: number,
+  defaultSecs: number,
+): number {
+  if (!raw) return defaultSecs;
+  const ttlPattern = /^[0-9]+[smhd]$/;
+  if (!ttlPattern.test(raw)) {
+    console.error(`[auth] ${envKey}="${raw}" is invalid (expected format: ^[0-9]+[smhd]$). Refusing to start.`);
+    process.exit(1);
+  }
+  const secs = parseTTL(raw, defaultSecs);
+  if (secs < min || secs > max) {
+    console.error(`[auth] ${envKey}="${raw}" resolves to ${secs}s which is outside the allowed range [${min}s, ${max}s]. Refusing to start.`);
+    process.exit(1);
+  }
+  return secs;
+}
+
+const DEVICE_CODE_EXPIRES_IN = validateDeviceTTL('DEVICE_CODE_EXPIRES_IN', process.env.DEVICE_CODE_EXPIRES_IN, 60, 86400, 1800);
+const DEVICE_CODE_INTERVAL_RAW = parseInt(process.env.DEVICE_CODE_INTERVAL || '5', 10);
+const DEVICE_CODE_INTERVAL = (Number.isInteger(DEVICE_CODE_INTERVAL_RAW) && DEVICE_CODE_INTERVAL_RAW >= 1 && DEVICE_CODE_INTERVAL_RAW <= 3600)
+  ? DEVICE_CODE_INTERVAL_RAW
+  : (() => {
+      if (process.env.DEVICE_CODE_INTERVAL) {
+        console.error(`[auth] DEVICE_CODE_INTERVAL="${process.env.DEVICE_CODE_INTERVAL}" is invalid (expected integer 1-3600). Refusing to start.`);
+        process.exit(1);
+      }
+      return 5;
+    })();
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -201,6 +235,13 @@ export const auth = betterAuth({
       { configId: 'user-keys', references: 'user', defaultPrefix: 'usr_' },
       { configId: 'org-keys', references: 'organization', defaultPrefix: 'org_' }
     ]),
+    deviceAuthorization({
+      verificationUri: '/device',
+      expiresIn: toTimeString(DEVICE_CODE_EXPIRES_IN),
+      interval: toTimeString(DEVICE_CODE_INTERVAL),
+      validateClient: async (clientId: string) =>
+        validateClientId(clientId, process.env.DEVICE_CODE_ALLOWED_CLIENTS),
+    }),
   ],
 
   socialProviders: {

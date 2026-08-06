@@ -1,5 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
-import { usernameClient, phoneNumberClient, magicLinkClient, emailOTPClient, adminClient, twoFactorClient, lastLoginMethodClient, organizationClient } from 'better-auth/client/plugins';
+import { usernameClient, phoneNumberClient, magicLinkClient, emailOTPClient, adminClient, twoFactorClient, lastLoginMethodClient, organizationClient, deviceAuthorizationClient } from 'better-auth/client/plugins';
 import { apiKeyClient } from '@better-auth/api-key/client';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { ac } from './permissions';
@@ -25,6 +25,7 @@ export const authClient = createAuthClient({
       }
     }),
     apiKeyClient(),
+    deviceAuthorizationClient(),
   ],
 });
 
