@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +27,9 @@ import { getCallbackUrl } from '@/lib/utils';
 
 type View = 'form' | 'magic-link-sent' | 'otp-input' | '2fa-totp' | '2fa-otp';
 
-export function SignInForm({ socialProviders = {} }: {
-  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>
+export function SignInForm({ socialProviders = {}, captchaOptions }: {
+  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>;
+  captchaOptions?: { provider: 'cloudflare-turnstile'; siteKey: string };
 }) {
   const [view, setView] = useState<View>('form');
   const [loginMethod, setLoginMethod] = useState<'email' | 'username' | 'phone'>('email');
@@ -38,6 +40,8 @@ export function SignInForm({ socialProviders = {} }: {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorMethods, setTwoFactorMethods] = useState<string[]>([]);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   useEffect(() => {
     // Run on client to avoid hydration mismatch
@@ -94,7 +98,10 @@ export function SignInForm({ socialProviders = {} }: {
 
     try {
       let result;
-      const fetchOptions = { onSuccess: () => {} }; // Prevent Better Auth from redirecting automatically
+      const fetchOptions = { 
+        onSuccess: () => {},
+        headers: { 'x-captcha-response': turnstileToken }
+      }; // Prevent Better Auth from redirecting automatically
 
       if (loginMethod === 'email') {
         result = await authClient.signIn.email({ email: values.identifier, password: values.password, fetchOptions });
@@ -109,6 +116,7 @@ export function SignInForm({ socialProviders = {} }: {
           message: result.error.message || 'Invalid identifier or password. Please try again.',
           code: (result.error as any).code,
         });
+        turnstileRef.current?.reset();
       } else if (!maybeHandleTwoFactorRedirect(result.data)) {
         window.location.href = getCallbackUrl();
       }
@@ -127,6 +135,7 @@ export function SignInForm({ socialProviders = {} }: {
       const result = await authClient.signIn.magicLink({
         email: identifier,
         callbackURL: getCallbackUrl(),
+        fetchOptions: { headers: { 'x-captcha-response': turnstileToken } }
       });
 
       if (result.error) {
@@ -134,6 +143,7 @@ export function SignInForm({ socialProviders = {} }: {
           message: result.error.message || 'Failed to send magic link. Please check the email and try again.',
           code: (result.error as any).code,
         });
+        turnstileRef.current?.reset();
       } else {
         setView('magic-link-sent');
       }
@@ -571,7 +581,18 @@ export function SignInForm({ socialProviders = {} }: {
 
 
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {captchaOptions?.provider === 'cloudflare-turnstile' && captchaOptions.siteKey && (
+              <div className="flex justify-center" data-action="turnstile-spin-v2">
+                <Turnstile
+                  siteKey={captchaOptions.siteKey}
+                  ref={turnstileRef}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  options={{ theme: 'auto' }}
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading || (!!captchaOptions && !turnstileToken)}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>

@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization, deviceAuthorization, bearer } from 'better-auth/plugins';
+import { username, phoneNumber, magicLink, emailOTP, admin, haveIBeenPwned, lastLoginMethod, organization, deviceAuthorization, bearer, captcha } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { toTimeString, validateClientId } from './device-utils';
 import { twoFactorStrict } from './plugins/two-factor-strict';
@@ -250,6 +250,10 @@ export const auth = betterAuth({
         validateClientId(clientId, process.env.DEVICE_CODE_ALLOWED_CLIENTS),
     }),
     bearer(),
+    captcha({
+      provider: 'cloudflare-turnstile',
+      secretKey: process.env.TURNSTILE_SECRET!,
+    }),
   ],
 
   socialProviders: {

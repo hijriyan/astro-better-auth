@@ -24,8 +24,10 @@ if (session) {
 }
 
 const socialProviders = getActiveOAuthProviders();
+const siteKey = import.meta.env.TURNSTILE_SITE_KEY;
+const captchaOptions = siteKey ? { provider: 'cloudflare-turnstile' as const, siteKey } : undefined;
 ---
 
 <BlankLayout title="Sign In">
-  <SignInForm socialProviders={socialProviders} client:load />
+  <SignInForm socialProviders={socialProviders} captchaOptions={captchaOptions} client:load />
 </BlankLayout>

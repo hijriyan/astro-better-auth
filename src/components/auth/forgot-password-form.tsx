@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,10 +15,14 @@ const formSchema = z.object({
   email: z.email('Invalid email address'),
 });
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ captchaOptions }: {
+  captchaOptions?: { provider: 'cloudflare-turnstile'; siteKey: string };
+}) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,6 +41,9 @@ export function ForgotPasswordForm() {
       const result = await authClient.requestPasswordReset({
         email: values.email,
         redirectTo: `${window.location.origin}/reset-password`,
+        fetchOptions: {
+          headers: { 'x-captcha-response': turnstileToken }
+        },
       });
 
       if (result.error) {
@@ -43,6 +51,7 @@ export function ForgotPasswordForm() {
           message: result.error.message || 'Failed to send reset email. Please try again.',
           code: (result.error as any).code,
         });
+        turnstileRef.current?.reset();
       } else {
         setSuccess(true);
       }
@@ -106,7 +115,18 @@ export function ForgotPasswordForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {captchaOptions?.provider === 'cloudflare-turnstile' && captchaOptions.siteKey && (
+              <div className="flex justify-center" data-action="turnstile-spin-v2">
+                <Turnstile
+                  siteKey={captchaOptions.siteKey}
+                  ref={turnstileRef}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  options={{ theme: 'auto' }}
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading || (!!captchaOptions && !turnstileToken)}>
               {loading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>

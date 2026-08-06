@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,12 +27,15 @@ const formSchema = z.object({
   path: ['confirmPassword'],
 });
 
-export function SignUpForm({ socialProviders = {} }: {
-  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>
+export function SignUpForm({ socialProviders = {}, captchaOptions }: {
+  socialProviders?: Record<string, Omit<SocialProviderType, 'icon'>>;
+  captchaOptions?: { provider: 'cloudflare-turnstile'; siteKey: string };
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,6 +73,9 @@ export function SignUpForm({ socialProviders = {} }: {
         username: values.username || undefined,
         phoneNumber: values.phoneNumber || undefined,
         callbackURL: getCallbackUrl(),
+        fetchOptions: {
+          headers: { 'x-captcha-response': turnstileToken }
+        }
       });
 
       if (result.error) {
@@ -76,6 +83,7 @@ export function SignUpForm({ socialProviders = {} }: {
           message: result.error.message || 'Registration failed. Please check your details.',
           code: (result.error as any).code,
         });
+        turnstileRef.current?.reset();
       } else {
         setSuccess(true);
       }
@@ -212,7 +220,18 @@ export function SignUpForm({ socialProviders = {} }: {
 
 
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {captchaOptions?.provider === 'cloudflare-turnstile' && captchaOptions.siteKey && (
+              <div className="flex justify-center" data-action="turnstile-spin-v2">
+                <Turnstile
+                  siteKey={captchaOptions.siteKey}
+                  ref={turnstileRef}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  options={{ theme: 'auto' }}
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading || (!!captchaOptions && !turnstileToken)}>
               {loading ? 'Creating account...' : 'Create Account'}
             </Button>
 
